@@ -81,6 +81,7 @@ dev = [
     "types-urllib3==1.26.25.14",
     "pydantic-to-typescript2==1.0.6",
     "freezegun==1.5.5",
+    "grimp==3.14",
 ]
 
 [build-system]

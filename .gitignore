@@ -174,3 +174,4 @@ dev/code-generation/openapi.json
 .dev.env
 frontend/eslint.config.deprecated.js
 .ultrainit/
+docs/architecture/dist/

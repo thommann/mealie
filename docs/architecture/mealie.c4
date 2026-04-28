@@ -1,0 +1,60 @@
+specification {
+  element actor
+  element system
+  element container
+  element component
+  tag ai
+}
+
+model {
+  user = actor 'Cook / Household Member'
+
+  mealie = system 'Mealie' {
+    api = container 'FastAPI Backend' 'Python 3.12, uv, Alembic' {
+
+      routes   = component 'routes'   'HTTP layer (FastAPI routers)'
+      services = component 'services' 'Business logic'
+      repos    = component 'repos'    'Data-access layer'
+      schema   = component 'schema'   'Pydantic schemas'
+      db       = component 'db'       'SQLAlchemy models + Alembic migrations'
+      core     = component 'core'     'Settings, security, config'
+
+      // AI slice — currently scattered, target shape after ADR 0002
+      aiGateway = component 'AI Gateway' 'Sole egress to LLM providers' {
+        #ai
+      }
+      aiClients = component 'AI Clients' 'Provider adapters (OpenAI, Anthropic, Ollama)' {
+        #ai
+      }
+    }
+  }
+
+  llmProvider = system 'LLM Provider' 'External; OpenAI / Ollama / Anthropic' {
+    #ai
+  }
+
+  user -> routes 'HTTP'
+  routes -> services
+  services -> repos
+  services -> schema
+  repos -> db
+  routes -> schema
+  services -> core
+  services -> aiGateway
+  aiGateway -> aiClients
+  aiClients -> llmProvider 'HTTPS'
+}
+
+views {
+  view components of api {
+    title 'Mealie — Component view'
+    include *
+  }
+
+  view aiSlice {
+    title 'AI Gateway slice (target shape)'
+    include element.tag == #ai
+    include element.tag == #ai -> *
+    include * -> element.tag == #ai
+  }
+}
