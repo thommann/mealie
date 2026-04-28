@@ -1,0 +1,21 @@
+name: Architecture
+on: [push, pull_request]
+jobs:
+  import-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8
+        with:
+          python-version: '3.12'
+      - run: uv sync --extra pgsql --group dev
+      - run: uv run lint-imports
+
+  likec4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - run: cd docs/architecture && npm ci && npx likec4 build
