@@ -1,5 +1,9 @@
 # Mealie
 
+> Authoritative AI-agent project facts (architecture, conventions, build
+> commands) live in `.github/copilot-instructions.md`. This file adds
+> Claude Code harness configuration only.
+
 Self-hosted recipe manager, meal planner, and shopping list with a FastAPI backend and Nuxt 4/Vue 3 frontend.
 
 ## Quick Reference
