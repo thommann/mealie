@@ -82,6 +82,7 @@ dev = [
     "pydantic-to-typescript2==1.0.6",
     "freezegun==1.5.5",
     "grimp==3.14",
+    "import-linter==2.11",
 ]
 
 [build-system]
@@ -179,3 +180,84 @@ max-complexity = 24  # Default is 10.
 
 [tool.uv]
 add-bounds = "exact"
+
+[tool.importlinter]
+root_package = "mealie"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture: routes -> services -> repos -> db"
+type = "layers"
+layers = [
+    "mealie.routes",
+    "mealie.services",
+    "mealie.repos",
+    "mealie.db",
+]
+# Pre-existing violations grandfathered below. Each line is owned by the ADR
+# that will retire it; remove the line in the same PR as the refactor.
+ignore_imports = [
+    # ADR 0007: bootstrap wiring lives in db/ and pulls repos + services on init.
+    "mealie.db.init_db -> mealie.repos.all_repositories",
+    "mealie.db.init_db -> mealie.repos.repository_factory",
+    "mealie.db.init_db -> mealie.repos.seed.init_users",
+    "mealie.db.init_db -> mealie.services.group_services.group_service",
+    "mealie.db.init_db -> mealie.services.household_services.household_service",
+    # ADR 0008: query_filter.builder is a pure utility — move to mealie.pkgs.
+    "mealie.repos.repository_generic -> mealie.services.query_filter.builder",
+    "mealie.repos.repository_recipes -> mealie.services.query_filter.builder",
+    "mealie.schema.cookbook.cookbook -> mealie.services.query_filter.builder",
+    "mealie.schema.meal_plan.plan_rules -> mealie.services.query_filter.builder",
+    # ADR 0009: seeders pull services for password hashing + label creation.
+    # init_users reaches user_service transitively via core.security.providers;
+    # the direct edge to ignore is in credentials_provider (also grandfathered
+    # by the core-isolation contract under ADR 0011).
+    "mealie.core.security.providers.credentials_provider -> mealie.services.user_services.user_service",
+    "mealie.repos.seed.seeders -> mealie.services.group_services.labels_service",
+    # ADR 0010: scheduler task callbacks belong in services, not as imports of routes.
+    "mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.routes.households.controller_shopping_lists",
+]
+
+[[tool.importlinter.contracts]]
+name = "AI egress only via mealie.services.ai_gateway"
+type = "forbidden"
+source_modules = [
+    "mealie.routes",
+    "mealie.repos",
+    "mealie.schema",
+    "mealie.db",
+    "mealie.services.recipe",
+    "mealie.services.parser_services",
+]
+forbidden_modules = [
+    "openai",
+    "anthropic",
+]
+ignore_imports = [
+    # ADR 0002: collapse into mealie.services.ai_gateway; remove as each call
+    # site is migrated. The ai_gateway lines are anticipatory — the module does
+    # not exist yet, hence unmatched_ignore_imports_alerting below.
+    "mealie.services.openai.openai -> openai",
+    "mealie.services.ai_gateway -> openai",
+    "mealie.services.ai_gateway -> anthropic",
+]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "core has no inward dependencies"
+type = "forbidden"
+source_modules = ["mealie.core"]
+forbidden_modules = [
+    "mealie.routes",
+    "mealie.services",
+    "mealie.repos",
+]
+ignore_imports = [
+    # ADR 0011: promote auth-provider DB lookups to a thin adapter outside core.
+    "mealie.core.dependencies.dependencies -> mealie.repos.all_repositories",
+    "mealie.core.security.providers.auth_provider -> mealie.repos.all_repositories",
+    "mealie.core.security.providers.credentials_provider -> mealie.repos.all_repositories",
+    "mealie.core.security.providers.credentials_provider -> mealie.services.user_services.user_service",
+    "mealie.core.security.providers.ldap_provider -> mealie.repos.all_repositories",
+    "mealie.core.security.providers.openid_provider -> mealie.repos.all_repositories",
+]

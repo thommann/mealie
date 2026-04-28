@@ -115,12 +115,18 @@ tasks:
     cmds:
       - uv run ruff check mealie
 
+  py:imports:
+    desc: enforces import-linter architectural contracts
+    cmds:
+      - uv run lint-imports
+
   py:check:
     desc: runs all linters, type checkers, and formatters
     deps:
       - py:format
       - py:lint
       - py:mypy
+      - py:imports
       - py:test
 
   py:coverage:

@@ -654,6 +654,21 @@ wheels = [
 ]
 
 [[package]]
+name = "import-linter"
+version = "2.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "grimp" },
+    { name = "rich" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/66/55b697a17bb15c6cb88d97d73716813f5427281527b90f02cc0a600abc6e/import_linter-2.11.tar.gz", hash = "sha256:5abc3394797a54f9bae315e7242dc98715ba485f840ac38c6d3192c370d0085e", size = 1153682, upload-time = "2026-03-06T12:11:38.198Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/aa/2ed2c89543632ded7196e0d93dcc6c7fe87769e88391a648c4a298ea864a/import_linter-2.11-py3-none-any.whl", hash = "sha256:3dc54cae933bae3430358c30989762b721c77aa99d424f56a08265be0eeaa465", size = 637315, upload-time = "2026-03-06T12:11:36.599Z" },
+]
+
+[[package]]
 name = "ingredient-parser-nlp"
 version = "2.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -959,6 +974,7 @@ dev = [
     { name = "coveragepy-lcov" },
     { name = "freezegun" },
     { name = "grimp" },
+    { name = "import-linter" },
     { name = "mkdocs-material" },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -1033,6 +1049,7 @@ dev = [
     { name = "coveragepy-lcov", specifier = "==0.1.2" },
     { name = "freezegun", specifier = "==1.5.5" },
     { name = "grimp", specifier = "==3.14" },
+    { name = "import-linter", specifier = "==2.11" },
     { name = "mkdocs-material", specifier = "==9.7.6" },
     { name = "mypy", specifier = "==1.20.2" },
     { name = "pre-commit", specifier = "==4.6.0" },
