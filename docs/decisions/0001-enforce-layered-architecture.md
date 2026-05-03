@@ -40,7 +40,18 @@ Chosen option: "(b) Extract the pure helper into the services layer and enforce 
 
 Compliance is confirmed by three mechanisms:
 
-1. **Static contract** — a `[importlinter]` `layered` contract in `pyproject.toml` declaring the ten layers from arc42 §5 in order, with the `services → routes` edge **removed from the grandfathered ignore list as part of this ADR's implementing PR** so any reintroduction fails CI. Remaining upward edges are listed in `ignore_imports` with a `# TODO(ADR-0001)` marker; that list must shrink to empty before this ADR is considered fully realised.
+1. **Static contract** — a `[tool.importlinter]` `forbidden` contract in `pyproject.toml` declaring `mealie.services` may not import `mealie.routes`. Reintroducing such an edge fails CI with output of the form:
+
+   ```
+   services must not depend on routes BROKEN
+
+   mealie.services is not allowed to import mealie.routes:
+
+   -   mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items ->
+   mealie.routes.households.controller_shopping_lists (l.7)
+   ```
+
+   Remaining upward edges are listed in `ignore_imports`; that list must shrink to empty before this ADR is considered fully realised.
 2. **CI gate** — `lint-imports` runs in the existing pre-commit / CI pipeline alongside `ruff` and `mypy`, blocking any PR that introduces a new edge against the contract.
 3. **Snapshot diff** — `docs/architecture/grimp.dot` is regenerated and diffed in review; an unexpected new cross-layer edge surfaces as a documentation diff even when it slips past the linter (e.g. via a dynamic import).
 

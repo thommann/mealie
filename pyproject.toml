@@ -81,6 +81,7 @@ dev = [
     "types-urllib3==1.26.25.14",
     "pydantic-to-typescript2==1.0.6",
     "freezegun==1.5.5",
+    "import-linter==2.11",
 ]
 
 [build-system]
@@ -178,3 +179,15 @@ max-complexity = 24  # Default is 10.
 
 [tool.uv]
 add-bounds = "exact"
+
+[tool.importlinter]
+root_packages = ["mealie"]
+
+[[tool.importlinter.contracts]]
+name = "services must not depend on routes"
+type = "forbidden"
+source_modules = ["mealie.services"]
+forbidden_modules = ["mealie.routes"]
+ignore_imports = [
+    "mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.routes.households.controller_shopping_lists",
+]
