@@ -1,0 +1,100 @@
+# serializer version: 1
+# name: test_shopping_list_items_route[alt_bulk-post-/api/households/shopping/items/create-bulk-<lambda>-201]
+  dict({
+    'createdItems': list([
+      dict({
+        'checked': False,
+        'createdAt': '<TIMESTAMP>',
+        'display': '1 alt-a',
+        'extras': dict({
+        }),
+        'food': None,
+        'foodId': None,
+        'groupId': '<UUID>',
+        'householdId': '<UUID>',
+        'id': '<UUID>',
+        'label': None,
+        'labelId': None,
+        'note': 'alt-a',
+        'position': 0,
+        'quantity': 1.0,
+        'recipeReferences': list([
+        ]),
+        'referencedRecipe': None,
+        'shoppingListId': '<UUID>',
+        'unit': None,
+        'unitId': None,
+        'updatedAt': '<TIMESTAMP>',
+      }),
+      dict({
+        'checked': False,
+        'createdAt': '<TIMESTAMP>',
+        'display': '1 alt-b',
+        'extras': dict({
+        }),
+        'food': None,
+        'foodId': None,
+        'groupId': '<UUID>',
+        'householdId': '<UUID>',
+        'id': '<UUID>',
+        'label': None,
+        'labelId': None,
+        'note': 'alt-b',
+        'position': 0,
+        'quantity': 1.0,
+        'recipeReferences': list([
+        ]),
+        'referencedRecipe': None,
+        'shoppingListId': '<UUID>',
+        'unit': None,
+        'unitId': None,
+        'updatedAt': '<TIMESTAMP>',
+      }),
+    ]),
+    'deletedItems': list([
+    ]),
+    'updatedItems': list([
+    ]),
+  })
+# ---
+# name: test_shopping_list_items_route[error_bad_uuid-post-/api/households/shopping/items-<lambda>-422]
+  dict({
+    'data': None,
+    'message': '1 validation error: {\'type\': \'uuid_parsing\', \'loc\': (\'body\', \'shopping_list_id\'), \'msg\': \'Input should be a valid UUID, invalid character: found `n` at 1\', \'input\': \'not-a-uuid\', \'ctx\': {\'error\': \'invalid character: found `n` at 1\'}}  File "/home/thomas/Projects/mealie/mealie/routes/households/controller_shopping_lists.py", line <N>, in create_one   POST /api/households/shopping/items',
+    'status_code': 422,
+  })
+# ---
+# name: test_shopping_list_items_route[happy-post-/api/households/shopping/items-<lambda>-201]
+  dict({
+    'createdItems': list([
+      dict({
+        'checked': False,
+        'createdAt': '<TIMESTAMP>',
+        'display': '1 happy-note',
+        'extras': dict({
+        }),
+        'food': None,
+        'foodId': None,
+        'groupId': '<UUID>',
+        'householdId': '<UUID>',
+        'id': '<UUID>',
+        'label': None,
+        'labelId': None,
+        'note': 'happy-note',
+        'position': 0,
+        'quantity': 1.0,
+        'recipeReferences': list([
+        ]),
+        'referencedRecipe': None,
+        'shoppingListId': '<UUID>',
+        'unit': None,
+        'unitId': None,
+        'updatedAt': '<TIMESTAMP>',
+      }),
+    ]),
+    'deletedItems': list([
+    ]),
+    'updatedItems': list([
+    ]),
+  })
+# ---
