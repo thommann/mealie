@@ -7,6 +7,8 @@ services:
       target: production
       dockerfile: ./docker/Dockerfile
     restart: always
+    depends_on:
+      - litellm
     volumes:
       - mealie-data:/app/data/
     ports:
@@ -14,6 +16,9 @@ services:
     environment:
       ALLOW_SIGNUP: "false"
       LOG_LEVEL: "DEBUG"
+
+      LLM_BASE_URL: "http://litellm:4000"
+      LLM_API_KEY: "${LITELLM_MASTER_KEY}"
 
       DB_ENGINE: sqlite # Optional: 'sqlite', 'postgres'
       # =====================================
@@ -32,6 +37,23 @@ services:
       # SMTP_FROM_EMAIL=
       # SMTP_USER=
       # SMTP_PASSWORD=
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: mealie-litellm
+    ports:
+      - "4000:4000"          # bind to localhost in production
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - .env
+    environment:
+      # LiteLLM authenticates inbound requests using LITELLM_MASTER_KEY.
+      # We expose the same secret to the application as LLM_API_KEY (see
+      # mealie service above) so the app stays gateway-agnostic.
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY}"
+    restart: unless-stopped
 
 volumes:
   mealie-data:

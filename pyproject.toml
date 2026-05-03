@@ -183,6 +183,7 @@ add-bounds = "exact"
 
 [tool.importlinter]
 root_packages = ["mealie"]
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "services must not depend on routes"
@@ -190,3 +191,12 @@ type = "forbidden"
 source_modules = ["mealie.services"]
 forbidden_modules = ["mealie.routes"]
 ignore_imports = []
+
+[[tool.importlinter.contracts]]
+name = "Provider SDKs are isolated to the LLM module"
+type = "forbidden"
+source_modules = ["mealie"]
+forbidden_modules = ["openai"]
+ignore_imports = [
+    "mealie.services.openai.openai -> openai",
+]

@@ -20,7 +20,8 @@ mp = MonkeyPatch()
 mp.setenv("PRODUCTION", "True")
 mp.setenv("TESTING", "True")
 mp.setenv("ALLOW_SIGNUP", "True")
-mp.setenv("OPENAI_API_KEY", "dummy-api-key")
+mp.setenv("LLM_BASE_URL", "http://litellm.test:4000")
+mp.setenv("LLM_API_KEY", "sk-test-llm-api-key")
 from pathlib import Path
 
 from fastapi.testclient import TestClient

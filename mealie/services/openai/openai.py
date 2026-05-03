@@ -105,18 +105,17 @@ class OpenAIService(BaseService):
         if not settings.OPENAI_ENABLED:
             raise ValueError("OpenAI is not enabled")
 
-        self.model = settings.OPENAI_MODEL
-        self.audio_model = settings.OPENAI_AUDIO_MODEL
+        # Aliases defined in litellm-config.yaml. The sidecar maps each to a
+        # concrete provider+model; credentials live in the sidecar.
+        self.model = "chat"
+        self.audio_model = "transcribe"
         self.workers = settings.OPENAI_WORKERS
         self.send_db_data = settings.OPENAI_SEND_DATABASE_DATA
         self.custom_prompt_dir = settings.OPENAI_CUSTOM_PROMPT_DIR
 
         self.get_client = lambda: AsyncOpenAI(
-            base_url=settings.OPENAI_BASE_URL,
-            api_key=settings.OPENAI_API_KEY,
-            timeout=settings.OPENAI_REQUEST_TIMEOUT,
-            default_headers=settings.OPENAI_CUSTOM_HEADERS,
-            default_query=settings.OPENAI_CUSTOM_PARAMS,
+            base_url=settings.LLM_BASE_URL,
+            api_key=settings.LLM_API_KEY,
         )
 
         super().__init__()

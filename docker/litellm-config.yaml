@@ -1,0 +1,38 @@
+model_list:
+  # Chat / vision / structured-output path. Used by every get_response call
+  # (recipe-from-image, ingredient parser, URL scrape).
+  - model_name: chat
+    litellm_params:
+      model: openai/gemini-2.5-flash
+      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: os.environ/CHAT_MODEL_API_KEY
+      timeout: 300
+      extra_headers: {}
+
+  # Fallback for the chat alias. Used automatically when the primary chat
+  # model errors out or is rate-limited (see litellm_settings.fallbacks).
+  - model_name: fallback_chat
+    litellm_params:
+      model: openai/gemini-3.1-flash-lite-preview
+      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: os.environ/FALLBACK_CHAT_MODEL_API_KEY
+      timeout: 300
+      extra_headers: {}
+
+  # Audio transcription path. Used by transcribe_audio for video / voice
+  # ingestion. Must be a model that supports audio.transcriptions.create;
+  # the chat alias above does not.
+  - model_name: transcribe
+    litellm_params:
+      model: whisper-1
+      api_base:
+      api_key: os.environ/TRANSCRIBE_MODEL_API_KEY
+      timeout: 300
+      extra_headers: {}
+
+litellm_settings:
+  fallbacks:
+    - chat: [fallback_chat]
+  # Global default timeout (seconds) for any model that does not set its own.
+  # Mirrors the legacy OPENAI_REQUEST_TIMEOUT setting.
+  request_timeout: 300

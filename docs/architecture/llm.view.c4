@@ -1,27 +1,27 @@
 // Focused architecture view of every code path that talks to an LLM provider.
-// Baseline before the gateway/fallback/rate-limit work — the SDK boundary is
-// `mealie.services.openai` (the wrapper) and `openai` (the SDK package).
+// Post-ADR-0002 topology: domain callers reach an in-process gateway
+// (`mealie.services.openai`) that talks to the LiteLLM sidecar over HTTP.
+// Provider SDKs (`openai`, `anthropic`, ...) live inside the sidecar; the
+// application imports `openai` only as the OpenAI-compatible client used
+// to reach the sidecar.
 
 model {
 
-  // ====== SDK boundary (external dependency) ======
-  // The Python `openai` package — AsyncOpenAI client, chat.completions.parse,
-  // audio.transcriptions.create. The wrapper module is the only call site.
-  openai_sdk = ext 'openai (Python SDK)' 'AsyncOpenAI client; chat.completions.parse and audio.transcriptions.create.' {
+  // ====== LiteLLM sidecar (separate container, OpenAI-compatible HTTP API) ======
+  // Provider routing, retries, fallback, and per-key budgets live here.
+  // Provider SDK packages (openai, anthropic, google.generativeai, ...) are
+  // bundled inside the LiteLLM container, not in the application image.
+  litellm_sidecar = ext 'LiteLLM sidecar' 'OpenAI-compatible gateway. Owns provider routing, fallback, retries, and credentials. Bundles all provider SDKs.' {
     #external #llm
   }
 
   // ====== Configuration nodes feeding the gateway ======
-  // Read by OpenAIService.__init__ from mealie.core.settings.settings.AppSettings.
-  llm_config = config 'OpenAI settings' 'Environment variables consumed by OpenAIService and feature gates.' {
+  // The application no longer carries provider credentials or model strings;
+  // those live in the sidecar. The application only knows how to reach it.
+  llm_config = config 'LLM gateway settings' 'Environment variables consumed by OpenAIService and feature gates.' {
     #config #llm
-    cfg_base_url           = mod 'OPENAI_BASE_URL'
-    cfg_api_key            = mod 'OPENAI_API_KEY'
-    cfg_model              = mod 'OPENAI_MODEL'
-    cfg_audio_model        = mod 'OPENAI_AUDIO_MODEL'
-    cfg_request_timeout    = mod 'OPENAI_REQUEST_TIMEOUT'
-    cfg_custom_headers     = mod 'OPENAI_CUSTOM_HEADERS'
-    cfg_custom_params      = mod 'OPENAI_CUSTOM_PARAMS'
+    cfg_llm_base_url = mod 'LLM_BASE_URL'
+    cfg_llm_api_key  = mod 'LLM_API_KEY'
     cfg_workers            = mod 'OPENAI_WORKERS'
     cfg_send_db_data       = mod 'OPENAI_SEND_DATABASE_DATA'
     cfg_custom_prompt_dir  = mod 'OPENAI_CUSTOM_PROMPT_DIR'
@@ -29,15 +29,14 @@ model {
     cfg_enable_transcription = mod 'OPENAI_ENABLE_TRANSCRIPTION_SERVICES'
   }
 
-  // ====== SDK boundary edge ======
-  // The wrapper is the *only* place that imports `openai`/AsyncOpenAI.
-  mealie.backend.services.openai -> openai_sdk 'chat.completions.parse + audio.transcriptions.create (HTTPS)'
-
-  // The wrapper still talks to the configured endpoint (kept for system_context parity).
-  mealie.backend.services.openai -> openai 'AI requests (HTTPS)'
+  // ====== Sidecar boundary edge ======
+  // The wrapper is the *only* place that imports the `openai` SDK, and it
+  // uses it solely as a thin OpenAI-compatible HTTP client pointed at the
+  // LiteLLM sidecar.
+  mealie.backend.services.openai -> litellm_sidecar 'chat.completions.parse + audio.transcriptions.create (HTTP, OpenAI-compatible)'
 
   // ====== Config -> gateway ======
-  llm_config -> mealie.backend.services.openai 'read at OpenAIService.__init__'
+  llm_config -> mealie.backend.services.openai 'read at OpenAIService.__init__ (LLM_BASE_URL/LLM_API_KEY from environment)'
 
   // ====== Domain callers (services that wrap a feature on top of the gateway) ======
   // Recipe-from-image: build_recipe_from_images uses get_response with image attachments.
@@ -66,11 +65,11 @@ model {
 views {
 
   view llm_paths {
-    title 'LLM call paths — baseline'
-    description 'Every code path that reaches an LLM provider. The openai SDK is the boundary; mealie.services.openai is the only wrapper. Domain callers are annotated with the route a user hits. Baseline before the gateway / fallback / rate-limit work.'
+    title 'LLM call paths — via LiteLLM sidecar'
+    description 'Every code path that reaches an LLM provider after ADR-0002. The application gateway (mealie.services.openai) is the only importer of the openai SDK, used as an OpenAI-compatible client pointed at the LiteLLM sidecar. Provider SDKs and credentials live inside the sidecar container.'
 
-    // SDK boundary + endpoint
-    include openai_sdk
+    // Sidecar (external)
+    include litellm_sidecar
     include openai
 
     // Configuration nodes
