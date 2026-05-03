@@ -30,3 +30,4 @@ fits within existing boundaries do **not** need an ADR.
 | ------ | ------------------------------------------------------------------------------- | -------- |
 | 0000   | [Record architectural decisions](0000-record-architecture-decisions.md)         | accepted |
 | 0001   | [Enforce a layered architecture and extract the scheduler→routes helper](0001-enforce-layered-architecture.md) | accepted |
+| 0002   | [Route LLM traffic through a LiteLLM sidecar behind a thin in-process gateway](0002-litellm-sidecar-gateway.md) | accepted |
