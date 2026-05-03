@@ -29,3 +29,4 @@ fits within existing boundaries do **not** need an ADR.
 | Number | Title                                                                           | Status   |
 | ------ | ------------------------------------------------------------------------------- | -------- |
 | 0000   | [Record architectural decisions](0000-record-architecture-decisions.md)         | accepted |
+| 0001   | [Enforce a layered architecture and extract the scheduler→routes helper](0001-enforce-layered-architecture.md) | accepted |
