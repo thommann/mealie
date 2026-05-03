@@ -1,0 +1,67 @@
+// Layering — target state after ADR-0001. The scheduler-task → controller
+// edge is gone; both consumers depend on a pure helper module placed in the
+// services layer. No edges carry tag #violation.
+
+model {
+  // The new pure helper introduced by ADR-0001's cure: extract
+  // publish_list_item_events from controller_shopping_lists into a services
+  // module so both the controller and the scheduler task depend on it.
+  extend mealie.backend.services.household_services {
+    shopping_list_events = mod 'mealie.services.household_services.shopping_list_events'
+  }
+
+  // Edges that exist after the refactor. These point downward (services and
+  // routes layers depend on a pure helper that itself depends only on schema
+  // and event-bus types — no FastAPI leak).
+  mealie.backend.routes.households.controller_shopping_lists
+    -> mealie.backend.services.household_services.shopping_list_events
+    'uses publish_list_item_events'
+
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items
+    -> mealie.backend.services.household_services.shopping_list_events
+    'uses publish_list_item_events'
+
+  mealie.backend.services.household_services.shopping_list_events
+    -> mealie.backend.services.event_bus_service.event_types
+    'emits'
+
+  mealie.backend.services.household_services.shopping_list_events
+    -> mealie.backend.schema.household.group_shopping_list
+    'reads'
+}
+
+views {
+  view layering_target {
+    title 'Layering — target (post ADR-0001)'
+    description '''
+      After the refactor: `publish_list_item_events` lives in
+      `mealie.services.household_services.shopping_list_events`. Both the
+      controller and the scheduler task import it from the services layer;
+      the scheduler no longer imports anything from `mealie.routes`, and
+      FastAPI is no longer dragged into the scheduler's import closure.
+    '''
+
+    include mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items
+    include mealie.backend.routes.households.controller_shopping_lists
+    include mealie.backend.services.household_services.shopping_list_events
+    include mealie.backend.services.household_services.shopping_lists
+    include mealie.backend.services.event_bus_service.event_types
+    include mealie.backend.schema.household.group_shopping_list
+    include mealie.backend.routes.households
+
+    // Drop the legacy violating edge from the diagram — the refactor removes
+    // it from the codebase, but the model still records it for the current
+    // view above.
+    exclude mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items
+      -> mealie.backend.routes.households.controller_shopping_lists
+
+    // Emphasise the cure: the new helper is the shared dependency.
+    include
+      mealie.backend.services.household_services.shopping_list_events
+      with {
+        color green
+      }
+
+    autoLayout TopBottom
+  }
+}

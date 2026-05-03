@@ -1,0 +1,54 @@
+// Layering — current state. The services -> routes edge is the violation
+// surfaced in ADR-0001 (docs/decisions/0001-enforce-layered-architecture.md).
+// Specification and model elements are declared in ../spec.c4 and ../model.c4
+// and reused by FQN here.
+
+specification {
+  tag violation
+}
+
+model {
+  // External heavy transitive dep that leaks into the scheduler when the
+  // services layer reaches into routes. Declared once for both layering views.
+  fastapi = ext 'FastAPI + CBV stack' 'HTTP framework, BaseCrudController, HttpRepo, APIRouter — pulled transitively when services imports routes.'
+
+  // Tag the existing violating edge so the view can style it.
+  extend mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items
+    -> mealie.backend.routes.households.controller_shopping_lists {
+    #violation
+  }
+
+  // Surface the transitive leak as a model edge: the controller drags the
+  // FastAPI/CBV stack into anything that imports it.
+  mealie.backend.routes.households.controller_shopping_lists -> fastapi 'transitively imports'
+}
+
+views {
+  view layering_current {
+    title 'Layering — current (violation)'
+    description '''
+      Today: the scheduler task imports `publish_list_item_events` from the
+      shopping-list controller. That single edge drags the entire FastAPI/CBV
+      stack into a process loop that only needs to broadcast events. See
+      ADR-0001.
+    '''
+
+    include mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items
+    include mealie.backend.routes.households.controller_shopping_lists
+    include mealie.backend.services.household_services.shopping_lists
+    include mealie.backend.services.event_bus_service.event_types
+    include mealie.backend.schema.household.group_shopping_list
+    include mealie.backend.routes.households
+    include fastapi
+
+    include
+      * -> *
+      where tag is #violation
+      with {
+        color red
+        line solid
+      }
+
+    autoLayout TopBottom
+  }
+}
