@@ -189,6 +189,4 @@ name = "services must not depend on routes"
 type = "forbidden"
 source_modules = ["mealie.services"]
 forbidden_modules = ["mealie.routes"]
-ignore_imports = [
-    "mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.routes.households.controller_shopping_lists",
-]
+ignore_imports = []

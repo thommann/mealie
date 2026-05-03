@@ -1,5 +1,11 @@
-// Layering — current state. The services -> routes edge is the violation
-// surfaced in ADR-0001 (docs/decisions/0001-enforce-layered-architecture.md).
+// Historical snapshot captured 2026-05-03, before the ADR-0001 refactor landed.
+// At that point `mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items`
+// imported `publish_list_item_events` from `mealie.routes.households.controller_shopping_lists`,
+// dragging the FastAPI/CBV stack into the scheduler. The helper has since been
+// extracted to `mealie.services.household_services.shopping_list_events` and the
+// `services -> routes` edge no longer exists; see `target.view.c4` for the
+// post-refactor state and ADR-0001 for the decision.
+// Kept for historical reference only — do NOT treat this view as current.
 // Specification and model elements are declared in ../spec.c4 and ../model.c4
 // and reused by FQN here.
 
@@ -24,8 +30,8 @@ model {
 }
 
 views {
-  view layering_current {
-    title 'Layering — current (violation)'
+  view layering_historical {
+    title 'Layering — historical pre-ADR-0001 (violation, captured 2026-05-03)'
     description '''
       Today: the scheduler task imports `publish_list_item_events` from the
       shopping-list controller. That single edge drags the entire FastAPI/CBV

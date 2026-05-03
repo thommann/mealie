@@ -75,8 +75,9 @@ The arrows mirror the import edges in `docs/architecture/grimp.dot` (e.g. `meali
 ### `mealie.services` — Domain services
 
 **Responsibility.** Orchestrate multi-step domain operations that are larger than a CRUD call: recipe ingestion, scheduling, event-bus dispatch, group/household/user services, shopping-list logic.
-**Key types.** `create_from_html(...)` (`mealie/services/scraper/scraper.py:25-45`) selecting between `RecipeScraperPackage` and `RecipeScraperOpenAI`; `EventBusService` (`mealie/services/event_bus_service/event_bus_service.py:1-40`); `AppriseEventListener` and `WebhookEventListener` (`mealie/services/event_bus_service/event_bus_listeners.py:23-30`); `SchedulerService` and `scheduler_registry` (`mealie/services/scheduler/`).
+**Key types.** `create_from_html(...)` (`mealie/services/scraper/scraper.py:25-45`) selecting between `RecipeScraperPackage` and `RecipeScraperOpenAI`; `EventBusService` (`mealie/services/event_bus_service/event_bus_service.py:1-40`); `AppriseEventListener` and `WebhookEventListener` (`mealie/services/event_bus_service/event_bus_listeners.py:23-30`); `SchedulerService` and `scheduler_registry` (`mealie/services/scheduler/`); `publish_list_item_events` (`mealie/services/household_services/shopping_list_events.py`) — extracted from the shopping-list controller per ADR-0001 so both the controller and the scheduler task import it from the services layer.
 **Key collaborators.** `mealie.repos`, `mealie.schema`, `mealie.pkgs`, `mealie.lang.providers.Translator` (referenced at `mealie/services/scraper/scraper.py:9`).
+**Layering constraint.** `mealie.services` MUST NOT import from `mealie.routes`. Enforced by the `services must not depend on routes` `forbidden` contract in `pyproject.toml` (see ADR-0001); `ignore_imports` is empty as of 2026-05-03.
 
 ### `mealie.repos` — Repository layer
 

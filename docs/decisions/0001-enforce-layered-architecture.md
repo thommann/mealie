@@ -38,7 +38,7 @@ Chosen option: "(b) Extract the pure helper into the services layer and enforce 
 
 ### Confirmation
 
-Compliance is confirmed by three mechanisms:
+*Verified 2026-05-03.* The `services -> routes` edge has been eliminated, `ignore_imports` is empty in `pyproject.toml`, and `lint-imports` reports the contract as KEPT. Compliance is confirmed by three mechanisms:
 
 1. **Static contract** — a `[tool.importlinter]` `forbidden` contract in `pyproject.toml` declaring `mealie.services` may not import `mealie.routes`. Reintroducing such an edge fails CI with output of the form:
 
@@ -51,7 +51,7 @@ Compliance is confirmed by three mechanisms:
    mealie.routes.households.controller_shopping_lists (l.7)
    ```
 
-   Remaining upward edges are listed in `ignore_imports`; that list must shrink to empty before this ADR is considered fully realised.
+   `ignore_imports` is empty as of 2026-05-03 — the ADR is fully realised for the `services -> routes` direction; any new upward edge fails CI.
 2. **CI gate** — `lint-imports` runs in the existing pre-commit / CI pipeline alongside `ruff` and `mypy`, blocking any PR that introduces a new edge against the contract.
 3. **Snapshot diff** — `docs/architecture/grimp.dot` is regenerated and diffed in review; an unexpected new cross-layer edge surfaces as a documentation diff even when it slips past the linter (e.g. via a dynamic import).
 
