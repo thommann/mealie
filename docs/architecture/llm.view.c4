@@ -1,0 +1,95 @@
+// Focused architecture view of every code path that talks to an LLM provider.
+// Baseline before the gateway/fallback/rate-limit work — the SDK boundary is
+// `mealie.services.openai` (the wrapper) and `openai` (the SDK package).
+
+model {
+
+  // ====== SDK boundary (external dependency) ======
+  // The Python `openai` package — AsyncOpenAI client, chat.completions.parse,
+  // audio.transcriptions.create. The wrapper module is the only call site.
+  openai_sdk = ext 'openai (Python SDK)' 'AsyncOpenAI client; chat.completions.parse and audio.transcriptions.create.' {
+    #external #llm
+  }
+
+  // ====== Configuration nodes feeding the gateway ======
+  // Read by OpenAIService.__init__ from mealie.core.settings.settings.AppSettings.
+  llm_config = config 'OpenAI settings' 'Environment variables consumed by OpenAIService and feature gates.' {
+    #config #llm
+    cfg_base_url           = mod 'OPENAI_BASE_URL'
+    cfg_api_key            = mod 'OPENAI_API_KEY'
+    cfg_model              = mod 'OPENAI_MODEL'
+    cfg_audio_model        = mod 'OPENAI_AUDIO_MODEL'
+    cfg_request_timeout    = mod 'OPENAI_REQUEST_TIMEOUT'
+    cfg_custom_headers     = mod 'OPENAI_CUSTOM_HEADERS'
+    cfg_custom_params      = mod 'OPENAI_CUSTOM_PARAMS'
+    cfg_workers            = mod 'OPENAI_WORKERS'
+    cfg_send_db_data       = mod 'OPENAI_SEND_DATABASE_DATA'
+    cfg_custom_prompt_dir  = mod 'OPENAI_CUSTOM_PROMPT_DIR'
+    cfg_enable_images      = mod 'OPENAI_ENABLE_IMAGE_SERVICES'
+    cfg_enable_transcription = mod 'OPENAI_ENABLE_TRANSCRIPTION_SERVICES'
+  }
+
+  // ====== SDK boundary edge ======
+  // The wrapper is the *only* place that imports `openai`/AsyncOpenAI.
+  mealie.backend.services.openai -> openai_sdk 'chat.completions.parse + audio.transcriptions.create (HTTPS)'
+
+  // The wrapper still talks to the configured endpoint (kept for system_context parity).
+  mealie.backend.services.openai -> openai 'AI requests (HTTPS)'
+
+  // ====== Config -> gateway ======
+  llm_config -> mealie.backend.services.openai 'read at OpenAIService.__init__'
+
+  // ====== Domain callers (services that wrap a feature on top of the gateway) ======
+  // Recipe-from-image: build_recipe_from_images uses get_response with image attachments.
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.openai 'recipe-from-image (build_recipe_from_images)'
+
+  // Ingredient parser strategy: chunked get_response calls per ingredient batch.
+  mealie.backend.services.parser_services.openai -> mealie.backend.services.openai 'ingredient parser (OpenAIParser._parse)'
+
+  // Two scraper strategies: HTML->LD+JSON via get_response, and video transcription via transcribe_audio.
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.services.openai 'URL scrape (RecipeScraperOpenAI) + video transcription (RecipeScraperOpenAITranscription)'
+
+  // ====== Route -> service edges (annotated with the URL path the user hits) ======
+  // Admin debug page — direct OpenAIService call from the route handler.
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.services.openai 'POST /api/admin/debug/openai — admin debug ping'
+
+  // Recipe creation from images — the route handler delegates to recipe_service.
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.recipe.recipe_service 'POST /api/recipes/create/image — recipe-from-image'
+
+  // Recipe creation from URL (and html-or-json variants) — exercises the OpenAI scraper strategies.
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.scraper.scraper_strategies 'POST /api/recipes/create/url{,/stream}, /create/html-or-json{,/stream} — AI URL scrape & video transcription'
+
+  // Ingredient parser endpoints — selected via parser=openai.
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.services.parser_services.openai 'POST /api/parser/ingredient(s) (parser=openai)'
+}
+
+views {
+
+  view llm_paths {
+    title 'LLM call paths — baseline'
+    description 'Every code path that reaches an LLM provider. The openai SDK is the boundary; mealie.services.openai is the only wrapper. Domain callers are annotated with the route a user hits. Baseline before the gateway / fallback / rate-limit work.'
+
+    // SDK boundary + endpoint
+    include openai_sdk
+    include openai
+
+    // Configuration nodes
+    include llm_config
+    include llm_config.*
+
+    // Gateway / wrapper
+    include mealie.backend.services.openai
+
+    // Domain callers (services)
+    include mealie.backend.services.recipe.recipe_service
+    include mealie.backend.services.parser_services.openai
+    include mealie.backend.services.scraper.scraper_strategies
+
+    // Route handlers (entry points)
+    include mealie.backend.routes.admin.admin_debug
+    include mealie.backend.routes.recipe.recipe_crud_routes
+    include mealie.backend.routes.parser.ingredient_parser
+
+    autoLayout TopBottom
+  }
+}

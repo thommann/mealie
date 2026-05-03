@@ -25,7 +25,16 @@ specification {
       color slate
     }
   }
+  element config {
+    style {
+      shape storage
+      color amber
+    }
+  }
   tag python
   tag frontend
   tag datastore
+  tag external
+  tag config
+  tag llm
 }
