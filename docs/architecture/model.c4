@@ -1,0 +1,1856 @@
+// Auto-generated LikeC4 model — Mealie
+model {
+
+  // ====== System Context actors ======
+  user = actor 'User' 'Self-hosted Mealie operator and household members using a browser.'
+  recipeWebsite = ext 'Recipe website' 'Third-party recipe URL scraped during recipe import.'
+  openai = ext 'OpenAI-compatible API' 'LLM endpoint used for AI-assisted recipe scraping.'
+  smtp = ext 'SMTP server' 'Outbound email transport for invitations and notifications.'
+  ldap = ext 'LDAP server' 'Optional directory service for authentication.'
+  oidc = ext 'OIDC IdP' 'Optional OpenID Connect identity provider.'
+  apprise = ext 'Apprise targets' 'Notification fan-out endpoints (Discord, Slack, webhook, ...).'
+  webhookTarget = ext 'Group webhook endpoints' 'External HTTP endpoints registered per group.'
+
+  // ====== System ======
+  mealie = system 'Mealie' 'Self-hosted recipe manager, meal planner, and shopping list.' {
+
+    frontend = container 'Frontend SPA' 'Nuxt 4 / Vue / Vuetify single-page app served from frontend/.' {
+      #frontend
+    }
+
+    backend = container 'Backend API' 'Python 3.12 FastAPI monolith (mealie.app).' {
+      #python
+
+      app = component 'mealie.app'
+      assets = component 'mealie.assets' {
+        users = mod 'mealie.assets.users'
+      }
+      core = component 'mealie.core' {
+        config = mod 'mealie.core.config'
+        dependencies = subpkg 'mealie.core.dependencies' {
+          dependencies = mod 'mealie.core.dependencies.dependencies'
+        }
+        exceptions = mod 'mealie.core.exceptions'
+        release_checker = mod 'mealie.core.release_checker'
+        root_logger = mod 'mealie.core.root_logger'
+        security = subpkg 'mealie.core.security' {
+          hasher = mod 'mealie.core.security.hasher'
+          providers = subpkg 'mealie.core.security.providers' {
+            auth_provider = mod 'mealie.core.security.providers.auth_provider'
+            credentials_provider = mod 'mealie.core.security.providers.credentials_provider'
+            ldap_provider = mod 'mealie.core.security.providers.ldap_provider'
+            openid_provider = mod 'mealie.core.security.providers.openid_provider'
+          }
+          security = mod 'mealie.core.security.security'
+        }
+        settings = subpkg 'mealie.core.settings' {
+          db_providers = mod 'mealie.core.settings.db_providers'
+          directories = mod 'mealie.core.settings.directories'
+          settings = mod 'mealie.core.settings.settings'
+          static_ = mod 'mealie.core.settings.static'
+          themes = mod 'mealie.core.settings.themes'
+        }
+      }
+      db = component 'mealie.db' {
+        db_setup = mod 'mealie.db.db_setup'
+        init_db = mod 'mealie.db.init_db'
+        migration_types = mod 'mealie.db.migration_types'
+        models = subpkg 'mealie.models' {
+          _all_models = mod 'mealie.db.models._all_models'
+          _model_base = mod 'mealie.db.models._model_base'
+          _model_utils = subpkg 'mealie._model_utils' {
+            auto_init = mod 'mealie.db.models._model_utils.auto_init'
+            datetime = mod 'mealie.db.models._model_utils.datetime'
+            guid = mod 'mealie.db.models._model_utils.guid'
+            helpers = mod 'mealie.db.models._model_utils.helpers'
+          }
+          group_ = subpkg 'mealie.db.models.group' {
+            exports = mod 'mealie.db.models.group.exports'
+            group_ = mod 'mealie.db.models.group.group'
+            preferences = mod 'mealie.db.models.group.preferences'
+            report = mod 'mealie.db.models.group.report'
+          }
+          household = subpkg 'mealie.db.models.household' {
+            cookbook = mod 'mealie.db.models.household.cookbook'
+            events = mod 'mealie.db.models.household.events'
+            household = mod 'mealie.db.models.household.household'
+            household_to_recipe = mod 'mealie.db.models.household.household_to_recipe'
+            invite_tokens = mod 'mealie.db.models.household.invite_tokens'
+            mealplan = mod 'mealie.db.models.household.mealplan'
+            preferences = mod 'mealie.db.models.household.preferences'
+            recipe_action = mod 'mealie.db.models.household.recipe_action'
+            shopping_list = mod 'mealie.db.models.household.shopping_list'
+            webhooks = mod 'mealie.db.models.household.webhooks'
+          }
+          labels = mod 'mealie.db.models.labels'
+          recipe = subpkg 'mealie.db.models.recipe' {
+            api_extras = mod 'mealie.db.models.recipe.api_extras'
+            assets = mod 'mealie.db.models.recipe.assets'
+            category = mod 'mealie.db.models.recipe.category'
+            comment = mod 'mealie.db.models.recipe.comment'
+            ingredient = mod 'mealie.db.models.recipe.ingredient'
+            instruction = mod 'mealie.db.models.recipe.instruction'
+            note = mod 'mealie.db.models.recipe.note'
+            nutrition = mod 'mealie.db.models.recipe.nutrition'
+            recipe = mod 'mealie.db.models.recipe.recipe'
+            recipe_timeline = mod 'mealie.db.models.recipe.recipe_timeline'
+            settings = mod 'mealie.db.models.recipe.settings'
+            shared = mod 'mealie.db.models.recipe.shared'
+            tag_ = mod 'mealie.db.models.recipe.tag'
+            tool = mod 'mealie.db.models.recipe.tool'
+          }
+          server = subpkg 'mealie.db.models.server' {
+            task = mod 'mealie.db.models.server.task'
+          }
+          users = subpkg 'mealie.db.models.users' {
+            password_reset = mod 'mealie.db.models.users.password_reset'
+            user_to_recipe = mod 'mealie.db.models.users.user_to_recipe'
+            users = mod 'mealie.db.models.users.users'
+          }
+        }
+      }
+      lang = component 'mealie.lang' {
+        locale_config = mod 'mealie.lang.locale_config'
+        providers = mod 'mealie.lang.providers'
+      }
+      main = component 'mealie.main'
+      middleware = component 'mealie.middleware' {
+        locale_context = mod 'mealie.middleware.locale_context'
+      }
+      pkgs = component 'mealie.pkgs' {
+        cache = subpkg 'mealie.pkgs.cache' {
+          cache_key = mod 'mealie.pkgs.cache.cache_key'
+        }
+        i18n = subpkg 'mealie.pkgs.i18n' {
+          json_provider = mod 'mealie.pkgs.i18n.json_provider'
+          provider_factory = mod 'mealie.pkgs.i18n.provider_factory'
+        }
+        img = subpkg 'mealie.pkgs.img' {
+          minify = mod 'mealie.pkgs.img.minify'
+        }
+        safehttp = subpkg 'mealie.pkgs.safehttp' {
+          transport = mod 'mealie.pkgs.safehttp.transport'
+        }
+        stats = subpkg 'mealie.pkgs.stats' {
+          fs_stats = mod 'mealie.pkgs.stats.fs_stats'
+        }
+      }
+      repos = component 'mealie.repos' {
+        _utils = mod 'mealie.repos._utils'
+        all_repositories = mod 'mealie.repos.all_repositories'
+        repository_cookbooks = mod 'mealie.repos.repository_cookbooks'
+        repository_factory = mod 'mealie.repos.repository_factory'
+        repository_foods = mod 'mealie.repos.repository_foods'
+        repository_generic = mod 'mealie.repos.repository_generic'
+        repository_group = mod 'mealie.repos.repository_group'
+        repository_household = mod 'mealie.repos.repository_household'
+        repository_meal_plan_rules = mod 'mealie.repos.repository_meal_plan_rules'
+        repository_meals = mod 'mealie.repos.repository_meals'
+        repository_recipes = mod 'mealie.repos.repository_recipes'
+        repository_shopping_list = mod 'mealie.repos.repository_shopping_list'
+        repository_units = mod 'mealie.repos.repository_units'
+        repository_users = mod 'mealie.repos.repository_users'
+        seed = subpkg 'mealie.seed' {
+          _abstract_seeder = mod 'mealie.repos.seed._abstract_seeder'
+          init_users = mod 'mealie.repos.seed.init_users'
+          resources = subpkg 'mealie.resources' {
+            foods = mod 'mealie.repos.seed.resources.foods'
+            units = mod 'mealie.repos.seed.resources.units'
+          }
+          seeders = mod 'mealie.repos.seed.seeders'
+        }
+      }
+      routes = component 'mealie.routes' {
+        _base = subpkg 'mealie.routes._base' {
+          base_controllers = mod 'mealie.routes._base.base_controllers'
+          checks = mod 'mealie.routes._base.checks'
+          controller = mod 'mealie.routes._base.controller'
+          mixins = mod 'mealie.routes._base.mixins'
+          routers = mod 'mealie.routes._base.routers'
+        }
+        admin = subpkg 'mealie.routes.admin' {
+          admin_about = mod 'mealie.routes.admin.admin_about'
+          admin_backups = mod 'mealie.routes.admin.admin_backups'
+          admin_debug = mod 'mealie.routes.admin.admin_debug'
+          admin_email = mod 'mealie.routes.admin.admin_email'
+          admin_maintenance = mod 'mealie.routes.admin.admin_maintenance'
+          admin_management_groups = mod 'mealie.routes.admin.admin_management_groups'
+          admin_management_households = mod 'mealie.routes.admin.admin_management_households'
+          admin_management_users = mod 'mealie.routes.admin.admin_management_users'
+        }
+        app = subpkg 'mealie.routes.app' {
+          app_about = mod 'mealie.routes.app.app_about'
+        }
+        auth = subpkg 'mealie.routes.auth' {
+          auth = mod 'mealie.routes.auth.auth'
+          auth_cache = mod 'mealie.routes.auth.auth_cache'
+        }
+        comments = mod 'mealie.routes.comments'
+        explore = subpkg 'mealie.routes.explore' {
+          controller_public_cookbooks = mod 'mealie.routes.explore.controller_public_cookbooks'
+          controller_public_foods = mod 'mealie.routes.explore.controller_public_foods'
+          controller_public_households = mod 'mealie.routes.explore.controller_public_households'
+          controller_public_organizers = mod 'mealie.routes.explore.controller_public_organizers'
+          controller_public_recipes = mod 'mealie.routes.explore.controller_public_recipes'
+        }
+        groups = subpkg 'mealie.routes.groups' {
+          controller_group_households = mod 'mealie.routes.groups.controller_group_households'
+          controller_group_reports = mod 'mealie.routes.groups.controller_group_reports'
+          controller_group_self_service = mod 'mealie.routes.groups.controller_group_self_service'
+          controller_labels = mod 'mealie.routes.groups.controller_labels'
+          controller_migrations = mod 'mealie.routes.groups.controller_migrations'
+          controller_seeder = mod 'mealie.routes.groups.controller_seeder'
+        }
+        handlers = mod 'mealie.routes.handlers'
+        households = subpkg 'mealie.routes.households' {
+          controller_cookbooks = mod 'mealie.routes.households.controller_cookbooks'
+          controller_group_notifications = mod 'mealie.routes.households.controller_group_notifications'
+          controller_group_recipe_actions = mod 'mealie.routes.households.controller_group_recipe_actions'
+          controller_household_self_service = mod 'mealie.routes.households.controller_household_self_service'
+          controller_invitations = mod 'mealie.routes.households.controller_invitations'
+          controller_mealplan = mod 'mealie.routes.households.controller_mealplan'
+          controller_mealplan_rules = mod 'mealie.routes.households.controller_mealplan_rules'
+          controller_shopping_lists = mod 'mealie.routes.households.controller_shopping_lists'
+          controller_webhooks = mod 'mealie.routes.households.controller_webhooks'
+        }
+        media = subpkg 'mealie.routes.media' {
+          media_recipe = mod 'mealie.routes.media.media_recipe'
+          media_user = mod 'mealie.routes.media.media_user'
+        }
+        organizers = subpkg 'mealie.routes.organizers' {
+          controller_categories = mod 'mealie.routes.organizers.controller_categories'
+          controller_tags = mod 'mealie.routes.organizers.controller_tags'
+          controller_tools = mod 'mealie.routes.organizers.controller_tools'
+        }
+        parser = subpkg 'mealie.routes.parser' {
+          ingredient_parser = mod 'mealie.routes.parser.ingredient_parser'
+        }
+        recipe = subpkg 'mealie.routes.recipe' {
+          _base = mod 'mealie.routes.recipe._base'
+          bulk_actions = mod 'mealie.routes.recipe.bulk_actions'
+          comments = mod 'mealie.routes.recipe.comments'
+          exports = mod 'mealie.routes.recipe.exports'
+          recipe_crud_routes = mod 'mealie.routes.recipe.recipe_crud_routes'
+          shared_routes = mod 'mealie.routes.recipe.shared_routes'
+          timeline_events = mod 'mealie.routes.recipe.timeline_events'
+        }
+        shared = mod 'mealie.routes.shared'
+        spa = subpkg 'mealie.routes.spa' {
+          manifest = mod 'mealie.routes.spa.manifest'
+        }
+        unit_and_foods = subpkg 'mealie.routes.unit_and_foods' {
+          foods = mod 'mealie.routes.unit_and_foods.foods'
+          units = mod 'mealie.routes.unit_and_foods.units'
+        }
+        users = subpkg 'mealie.routes.users' {
+          _helpers = mod 'mealie.routes.users._helpers'
+          api_tokens = mod 'mealie.routes.users.api_tokens'
+          crud = mod 'mealie.routes.users.crud'
+          forgot_password = mod 'mealie.routes.users.forgot_password'
+          images = mod 'mealie.routes.users.images'
+          ratings = mod 'mealie.routes.users.ratings'
+          registration = mod 'mealie.routes.users.registration'
+        }
+        utility_routes = mod 'mealie.routes.utility_routes'
+        validators = subpkg 'mealie.routes.validators' {
+          validators = mod 'mealie.routes.validators.validators'
+        }
+      }
+      schema = component 'mealie.schema' {
+        _mealie = subpkg 'mealie.schema._mealie' {
+          datetime_parse = mod 'mealie.schema._mealie.datetime_parse'
+          mealie_model = mod 'mealie.schema._mealie.mealie_model'
+          types = mod 'mealie.schema._mealie.types'
+          validators = mod 'mealie.schema._mealie.validators'
+        }
+        admin = subpkg 'mealie.schema.admin' {
+          about = mod 'mealie.schema.admin.about'
+          backup = mod 'mealie.schema.admin.backup'
+          debug = mod 'mealie.schema.admin.debug'
+          email = mod 'mealie.schema.admin.email'
+          maintenance = mod 'mealie.schema.admin.maintenance'
+          migration = mod 'mealie.schema.admin.migration'
+          restore = mod 'mealie.schema.admin.restore'
+        }
+        analytics = subpkg 'mealie.schema.analytics' {
+          analytics = mod 'mealie.schema.analytics.analytics'
+        }
+        cookbook = subpkg 'mealie.schema.cookbook' {
+          cookbook = mod 'mealie.schema.cookbook.cookbook'
+        }
+        group_ = subpkg 'mealie.schema.group' {
+          group_ = mod 'mealie.schema.group.group'
+          group_exports = mod 'mealie.schema.group.group_exports'
+          group_migration = mod 'mealie.schema.group.group_migration'
+          group_preferences = mod 'mealie.schema.group.group_preferences'
+          group_seeder = mod 'mealie.schema.group.group_seeder'
+          group_statistics = mod 'mealie.schema.group.group_statistics'
+        }
+        household = subpkg 'mealie.schema.household' {
+          group_events = mod 'mealie.schema.household.group_events'
+          group_recipe_action = mod 'mealie.schema.household.group_recipe_action'
+          group_shopping_list = mod 'mealie.schema.household.group_shopping_list'
+          household = mod 'mealie.schema.household.household'
+          household_permissions = mod 'mealie.schema.household.household_permissions'
+          household_preferences = mod 'mealie.schema.household.household_preferences'
+          household_statistics = mod 'mealie.schema.household.household_statistics'
+          invite_token = mod 'mealie.schema.household.invite_token'
+          webhook = mod 'mealie.schema.household.webhook'
+        }
+        labels = subpkg 'mealie.schema.labels' {
+          multi_purpose_label = mod 'mealie.schema.labels.multi_purpose_label'
+        }
+        make_dependable = mod 'mealie.schema.make_dependable'
+        mapper = mod 'mealie.schema.mapper'
+        meal_plan = subpkg 'mealie.schema.meal_plan' {
+          new_meal = mod 'mealie.schema.meal_plan.new_meal'
+          plan_rules = mod 'mealie.schema.meal_plan.plan_rules'
+          shopping_list = mod 'mealie.schema.meal_plan.shopping_list'
+        }
+        openai = subpkg 'mealie.schema.openai' {
+          _base = mod 'mealie.schema.openai._base'
+          general = mod 'mealie.schema.openai.general'
+          recipe = mod 'mealie.schema.openai.recipe'
+          recipe_ingredient = mod 'mealie.schema.openai.recipe_ingredient'
+        }
+        recipe = subpkg 'mealie.schema.recipe' {
+          recipe = mod 'mealie.schema.recipe.recipe'
+          recipe_asset = mod 'mealie.schema.recipe.recipe_asset'
+          recipe_bulk_actions = mod 'mealie.schema.recipe.recipe_bulk_actions'
+          recipe_category = mod 'mealie.schema.recipe.recipe_category'
+          recipe_comments = mod 'mealie.schema.recipe.recipe_comments'
+          recipe_image_types = mod 'mealie.schema.recipe.recipe_image_types'
+          recipe_ingredient = mod 'mealie.schema.recipe.recipe_ingredient'
+          recipe_notes = mod 'mealie.schema.recipe.recipe_notes'
+          recipe_nutrition = mod 'mealie.schema.recipe.recipe_nutrition'
+          recipe_scraper = mod 'mealie.schema.recipe.recipe_scraper'
+          recipe_settings = mod 'mealie.schema.recipe.recipe_settings'
+          recipe_share_token = mod 'mealie.schema.recipe.recipe_share_token'
+          recipe_step = mod 'mealie.schema.recipe.recipe_step'
+          recipe_suggestion = mod 'mealie.schema.recipe.recipe_suggestion'
+          recipe_timeline_events = mod 'mealie.schema.recipe.recipe_timeline_events'
+          recipe_tool = mod 'mealie.schema.recipe.recipe_tool'
+          request_helpers = mod 'mealie.schema.recipe.request_helpers'
+        }
+        reports = subpkg 'mealie.schema.reports' {
+          reports = mod 'mealie.schema.reports.reports'
+        }
+        response = subpkg 'mealie.schema.response' {
+          pagination = mod 'mealie.schema.response.pagination'
+          query_search = mod 'mealie.schema.response.query_search'
+          responses = mod 'mealie.schema.response.responses'
+          validation = mod 'mealie.schema.response.validation'
+        }
+        static_ = subpkg 'mealie.schema.static' {
+          recipe_keys = mod 'mealie.schema.static.recipe_keys'
+        }
+        user = subpkg 'mealie.schema.user' {
+          auth = mod 'mealie.schema.user.auth'
+          registration = mod 'mealie.schema.user.registration'
+          user = mod 'mealie.schema.user.user'
+          user_passwords = mod 'mealie.schema.user.user_passwords'
+        }
+      }
+      services = component 'mealie.services' {
+        _base_service = mod 'mealie.services._base_service'
+        backups_v2 = subpkg 'mealie.backups_v2' {
+          alchemy_exporter = mod 'mealie.services.backups_v2.alchemy_exporter'
+          backup_file = mod 'mealie.services.backups_v2.backup_file'
+          backup_v2 = mod 'mealie.services.backups_v2.backup_v2'
+        }
+        email = subpkg 'mealie.services.email' {
+          email_senders = mod 'mealie.services.email.email_senders'
+          email_service = mod 'mealie.services.email.email_service'
+        }
+        event_bus_service = subpkg 'mealie.event_bus_service' {
+          event_bus_listeners = mod 'mealie.services.event_bus_service.event_bus_listeners'
+          event_bus_service = mod 'mealie.services.event_bus_service.event_bus_service'
+          event_types = mod 'mealie.services.event_bus_service.event_types'
+          publisher = mod 'mealie.services.event_bus_service.publisher'
+        }
+        exporter = subpkg 'mealie.services.exporter' {
+          _abc_exporter = mod 'mealie.services.exporter._abc_exporter'
+          exporter = mod 'mealie.services.exporter.exporter'
+          recipe_exporter = mod 'mealie.services.exporter.recipe_exporter'
+        }
+        group_services = subpkg 'mealie.group_services' {
+          group_service = mod 'mealie.services.group_services.group_service'
+          labels_service = mod 'mealie.services.group_services.labels_service'
+        }
+        household_services = subpkg 'mealie.household_services' {
+          household_service = mod 'mealie.services.household_services.household_service'
+          shopping_lists = mod 'mealie.services.household_services.shopping_lists'
+        }
+        migrations = subpkg 'mealie.services.migrations' {
+          _migration_base = mod 'mealie.services.migrations._migration_base'
+          chowdown = mod 'mealie.services.migrations.chowdown'
+          cookn = mod 'mealie.services.migrations.cookn'
+          copymethat = mod 'mealie.services.migrations.copymethat'
+          mealie_alpha = mod 'mealie.services.migrations.mealie_alpha'
+          myrecipebox = mod 'mealie.services.migrations.myrecipebox'
+          nextcloud = mod 'mealie.services.migrations.nextcloud'
+          paprika = mod 'mealie.services.migrations.paprika'
+          plantoeat = mod 'mealie.services.migrations.plantoeat'
+          recipekeeper = mod 'mealie.services.migrations.recipekeeper'
+          tandoor = mod 'mealie.services.migrations.tandoor'
+          utils = subpkg 'mealie.utils' {
+            database_helpers = mod 'mealie.services.migrations.utils.database_helpers'
+            migration_alias = mod 'mealie.services.migrations.utils.migration_alias'
+            migration_helpers = mod 'mealie.services.migrations.utils.migration_helpers'
+          }
+        }
+        openai = subpkg 'mealie.services.openai' {
+          openai = mod 'mealie.services.openai.openai'
+        }
+        parser_services = subpkg 'mealie.services.parser_services' {
+          _base = mod 'mealie.services.parser_services._base'
+          brute = subpkg 'mealie.services.parser_services.brute' {
+            process = mod 'mealie.services.parser_services.brute.process'
+          }
+          ingredient_parser = mod 'mealie.services.parser_services.ingredient_parser'
+          openai = subpkg 'mealie.services.parser_services.openai' {
+            parser = mod 'mealie.services.parser_services.openai.parser'
+          }
+          parser_utils = subpkg 'mealie.services.parser_services.parser_utils' {
+            string_utils = mod 'mealie.services.parser_services.parser_utils.string_utils'
+            unit_utils = mod 'mealie.services.parser_services.parser_utils.unit_utils'
+          }
+        }
+        query_filter = subpkg 'mealie.query_filter' {
+          builder = mod 'mealie.services.query_filter.builder'
+          keywords = mod 'mealie.services.query_filter.keywords'
+          operators = mod 'mealie.services.query_filter.operators'
+        }
+        recipe = subpkg 'mealie.recipe' {
+          recipe_bulk_service = mod 'mealie.services.recipe.recipe_bulk_service'
+          recipe_data_service = mod 'mealie.services.recipe.recipe_data_service'
+          recipe_service = mod 'mealie.services.recipe.recipe_service'
+          template_service = mod 'mealie.services.recipe.template_service'
+        }
+        scheduler = subpkg 'mealie.services.scheduler' {
+          runner = mod 'mealie.services.scheduler.runner'
+          scheduler_registry = mod 'mealie.services.scheduler.scheduler_registry'
+          scheduler_service = mod 'mealie.services.scheduler.scheduler_service'
+          tasks = subpkg 'mealie.services.scheduler.tasks' {
+            create_timeline_events = mod 'mealie.services.scheduler.tasks.create_timeline_events'
+            delete_old_checked_shopping_list_items = mod 'mealie.services.scheduler.tasks.delete_old_checked_shopping_list_items'
+            post_webhooks = mod 'mealie.services.scheduler.tasks.post_webhooks'
+            purge_expired_share_tokens = mod 'mealie.services.scheduler.tasks.purge_expired_share_tokens'
+            purge_group_exports = mod 'mealie.services.scheduler.tasks.purge_group_exports'
+            purge_password_reset = mod 'mealie.services.scheduler.tasks.purge_password_reset'
+            purge_registration = mod 'mealie.services.scheduler.tasks.purge_registration'
+            reset_locked_users = mod 'mealie.services.scheduler.tasks.reset_locked_users'
+          }
+        }
+        scraper = subpkg 'mealie.scraper' {
+          cleaner = mod 'mealie.services.scraper.cleaner'
+          recipe_bulk_scraper = mod 'mealie.services.scraper.recipe_bulk_scraper'
+          recipe_scraper = mod 'mealie.services.scraper.recipe_scraper'
+          scraped_extras = mod 'mealie.services.scraper.scraped_extras'
+          scraper = mod 'mealie.services.scraper.scraper'
+          scraper_strategies = mod 'mealie.services.scraper.scraper_strategies'
+        }
+        seeder = subpkg 'mealie.seeder' {
+          seeder_service = mod 'mealie.services.seeder.seeder_service'
+        }
+        urls = subpkg 'mealie.services.urls' {
+          url_constructors = mod 'mealie.services.urls.url_constructors'
+        }
+        user_services = subpkg 'mealie.user_services' {
+          password_reset_service = mod 'mealie.services.user_services.password_reset_service'
+          registration_service = mod 'mealie.services.user_services.registration_service'
+          user_service = mod 'mealie.services.user_services.user_service'
+        }
+      }
+    }
+
+    database = container 'Database' 'SQLite (default, WAL pragma) or PostgreSQL.' {
+      #datastore
+    }
+
+    alembic = container 'Alembic migrations' 'Versioned schema migrations under mealie/alembic/versions (run on startup via init_db.main()).'
+
+    nltkData = container 'NLTK data' 'Tokenizer/corpora used by recipe ingredient parser.'
+
+    scheduler = container 'In-process scheduler' 'Asyncio scheduler running daily/hourly/minutely tasks inside the backend worker.'
+  }
+
+  // ====== System Context relationships ======
+  user -> mealie.frontend 'Uses (browser, HTTPS)'
+  user -> mealie.backend 'Direct API access (HTTPS / JSON / SSE)'
+  mealie.backend -> recipeWebsite 'Scrapes recipe HTML (HTTPS)'
+  mealie.backend -> openai 'AI-assisted scraping (HTTPS)'
+  mealie.backend -> smtp 'Sends email'
+  mealie.backend -> ldap 'Authenticates users (optional)'
+  mealie.backend -> oidc 'Authenticates users (optional)'
+  mealie.backend -> apprise 'Publishes domain events'
+  mealie.backend -> webhookTarget 'Posts group webhooks'
+
+  // ====== Container relationships ======
+  mealie.frontend -> mealie.backend 'JSON / SSE over HTTPS'
+  mealie.backend -> mealie.database 'SQLAlchemy 2.0 (sync session)'
+  mealie.backend -> mealie.alembic 'Runs migrations on startup'
+  mealie.alembic -> mealie.database 'DDL'
+  mealie.backend -> mealie.nltkData 'Loads tokenizer/corpora'
+  mealie.backend -> mealie.scheduler 'Hosts'
+  mealie.scheduler -> mealie.backend 'Invokes scheduled tasks'
+
+  // ====== Module-level relationships (from grimp.dot) ======
+  mealie.backend.app -> mealie.backend.core.config
+  mealie.backend.app -> mealie.backend.core.root_logger
+  mealie.backend.app -> mealie.backend.core.settings.static_
+  mealie.backend.app -> mealie.backend.db.init_db
+  mealie.backend.app -> mealie.backend.middleware.locale_context
+  mealie.backend.app -> mealie.backend.routes
+  mealie.backend.app -> mealie.backend.routes.handlers
+  mealie.backend.app -> mealie.backend.routes.media
+  mealie.backend.app -> mealie.backend.routes.spa
+  mealie.backend.app -> mealie.backend.routes.utility_routes
+  mealie.backend.app -> mealie.backend.services.scheduler
+  mealie.backend.app -> mealie.backend.services.scheduler.tasks
+  mealie.backend.core.config -> mealie.backend.core.settings
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.core.config
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.core.root_logger
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.db.db_setup
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.repos.all_repositories
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.schema.user
+  mealie.backend.core.dependencies.dependencies -> mealie.backend.schema.user.user
+  mealie.backend.core.exceptions -> mealie.backend.lang.providers
+  mealie.backend.core.root_logger -> mealie.backend.core.config
+  mealie.backend.core.security.hasher -> mealie.backend.core.config
+  mealie.backend.core.security.providers.auth_provider -> mealie.backend.core.config
+  mealie.backend.core.security.providers.auth_provider -> mealie.backend.repos.all_repositories
+  mealie.backend.core.security.providers.auth_provider -> mealie.backend.schema.user.user
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.core.config
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.core.exceptions
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.core.root_logger
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.core.security.hasher
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.core.security.providers.auth_provider
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.db.models.users.users
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.repos.all_repositories
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.schema.user.auth
+  mealie.backend.core.security.providers.credentials_provider -> mealie.backend.services.user_services.user_service
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.core.config
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.core.root_logger
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.core.security.providers.credentials_provider
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.db.models.users.users
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.repos.all_repositories
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.schema.user.auth
+  mealie.backend.core.security.providers.ldap_provider -> mealie.backend.schema.user.user
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.core.config
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.core.exceptions
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.core.root_logger
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.core.security.providers.auth_provider
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.db.models.users.users
+  mealie.backend.core.security.providers.openid_provider -> mealie.backend.repos.all_repositories
+  mealie.backend.core.security.security -> mealie.backend.core.config
+  mealie.backend.core.security.security -> mealie.backend.core.root_logger
+  mealie.backend.core.security.security -> mealie.backend.core.security.hasher
+  mealie.backend.core.security.security -> mealie.backend.core.security.providers.auth_provider
+  mealie.backend.core.security.security -> mealie.backend.core.security.providers.credentials_provider
+  mealie.backend.core.security.security -> mealie.backend.core.security.providers.ldap_provider
+  mealie.backend.core.security.security -> mealie.backend.schema.user.auth
+  mealie.backend.core.settings.settings -> mealie.backend.core.root_logger
+  mealie.backend.core.settings.settings -> mealie.backend.core.settings.db_providers
+  mealie.backend.core.settings.settings -> mealie.backend.core.settings.static_
+  mealie.backend.core.settings.settings -> mealie.backend.core.settings.themes
+  mealie.backend.db.db_setup -> mealie.backend.core.config
+  mealie.backend.db.init_db -> mealie.backend.core.config
+  mealie.backend.db.init_db -> mealie.backend.core.root_logger
+  mealie.backend.db.init_db -> mealie.backend.db.db_setup
+  mealie.backend.db.init_db -> mealie.backend.repos.all_repositories
+  mealie.backend.db.init_db -> mealie.backend.repos.repository_factory
+  mealie.backend.db.init_db -> mealie.backend.repos.seed.init_users
+  mealie.backend.db.init_db -> mealie.backend.schema.household.household
+  mealie.backend.db.init_db -> mealie.backend.schema.user.user
+  mealie.backend.db.init_db -> mealie.backend.services.group_services.group_service
+  mealie.backend.db.init_db -> mealie.backend.services.household_services.household_service
+  mealie.backend.db.migration_types -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.migration_types -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models._all_models -> mealie.backend.db.models.group_
+  mealie.backend.db.models._all_models -> mealie.backend.db.models.labels
+  mealie.backend.db.models._all_models -> mealie.backend.db.models.recipe
+  mealie.backend.db.models._all_models -> mealie.backend.db.models.server
+  mealie.backend.db.models._all_models -> mealie.backend.db.models.users
+  mealie.backend.db.models._model_base -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models._model_utils.auto_init -> mealie.backend.db.models._model_base
+  mealie.backend.db.models._model_utils.auto_init -> mealie.backend.db.models._model_utils.helpers
+  mealie.backend.db.models.group_.exports -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.group_.exports -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.group_.exports -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.group_.exports -> mealie.backend.db.models.group_.group_
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.group_.exports
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.group_.preferences
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.group_.report
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.cookbook
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.events
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.invite_tokens
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.mealplan
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.recipe_action
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.shopping_list
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.household.webhooks
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.labels
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.recipe.category
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.server.task
+  mealie.backend.db.models.group_.group_ -> mealie.backend.db.models.users
+  mealie.backend.db.models.group_.preferences -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.group_.preferences -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.group_.preferences -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.group_.preferences -> mealie.backend.db.models.group_.group_
+  mealie.backend.db.models.group_.report -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.group_.report -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.group_.report -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.group_.report -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.group_.report -> mealie.backend.db.models.group_.group_
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models.recipe.category
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.db.models.household.cookbook -> mealie.backend.db.models.recipe.tool
+  mealie.backend.db.models.household.events -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.events -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.events -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.events -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.events -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.household -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.household -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.household -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.household.household_to_recipe
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.recipe.tool
+  mealie.backend.db.models.household.household -> mealie.backend.db.models.users
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.household.household_to_recipe -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.db.models.household.invite_tokens -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.invite_tokens -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.invite_tokens -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.invite_tokens -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.invite_tokens -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.recipe.category
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.db.models.household.mealplan -> mealie.backend.db.models.users
+  mealie.backend.db.models.household.preferences -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.preferences -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.preferences -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.preferences -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.recipe_action -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.recipe_action -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.recipe_action -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.recipe_action -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.recipe_action -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.labels
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.recipe.api_extras
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.db.models.household.shopping_list -> mealie.backend.db.models.users
+  mealie.backend.db.models.household.webhooks -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.household.webhooks -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.household.webhooks -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.household.webhooks -> mealie.backend.db.models.group_
+  mealie.backend.db.models.household.webhooks -> mealie.backend.db.models.household.household
+  mealie.backend.db.models.labels -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.labels -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.labels -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.labels -> mealie.backend.db.models.group_.group_
+  mealie.backend.db.models.labels -> mealie.backend.db.models.household.shopping_list
+  mealie.backend.db.models.labels -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.recipe.api_extras -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.api_extras -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.assets -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.assets -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.category -> mealie.backend.core.root_logger
+  mealie.backend.db.models.recipe.category -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.category -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.category -> mealie.backend.db.models.group_
+  mealie.backend.db.models.recipe.comment -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.comment -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.comment -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.comment -> mealie.backend.db.models.users
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models.group_
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models.household
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models.labels
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models.recipe.api_extras
+  mealie.backend.db.models.recipe.ingredient -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.db.models.recipe.instruction -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.instruction -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.instruction -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.note -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.note -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.nutrition -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.nutrition -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.group_
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.household
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.household.household_to_recipe
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.api_extras
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.assets
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.category
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.comment
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.instruction
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.note
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.nutrition
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.recipe_timeline
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.settings
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.shared
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.recipe.tool
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.users
+  mealie.backend.db.models.recipe.recipe -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.db.models.recipe.recipe_timeline -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.recipe_timeline -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.recipe_timeline -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.recipe.recipe_timeline -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.recipe_timeline -> mealie.backend.db.models.users
+  mealie.backend.db.models.recipe.settings -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.settings -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.shared -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.shared -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.shared -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.recipe.shared -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.tag_ -> mealie.backend.core.root_logger
+  mealie.backend.db.models.recipe.tag_ -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.tag_ -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.tag_ -> mealie.backend.db.models.group_
+  mealie.backend.db.models.recipe.tool -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.recipe.tool -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.recipe.tool -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.recipe.tool -> mealie.backend.db.models.group_
+  mealie.backend.db.models.recipe.tool -> mealie.backend.db.models.household
+  mealie.backend.db.models.server.task -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.server.task -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.server.task -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.server.task -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.server.task -> mealie.backend.db.models.group_
+  mealie.backend.db.models.users.password_reset -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.users.password_reset -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.users.password_reset -> mealie.backend.db.models.users.users
+  mealie.backend.db.models.users.user_to_recipe -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.users.user_to_recipe -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.users.user_to_recipe -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.users.user_to_recipe -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.users.user_to_recipe -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.db.models.users.users -> mealie.backend.core.config
+  mealie.backend.db.models.users.users -> mealie.backend.db.models._model_base
+  mealie.backend.db.models.users.users -> mealie.backend.db.models._model_utils.auto_init
+  mealie.backend.db.models.users.users -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.db.models.users.users -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.group_
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.household
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.household.mealplan
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.household.shopping_list
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.recipe
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.users.password_reset
+  mealie.backend.db.models.users.users -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.lang.providers -> mealie.backend.lang.locale_config
+  mealie.backend.lang.providers -> mealie.backend.pkgs.i18n
+  mealie.backend.main -> mealie.backend.app
+  mealie.backend.middleware.locale_context -> mealie.backend.lang.providers
+  mealie.backend.pkgs.i18n.provider_factory -> mealie.backend.pkgs.i18n.json_provider
+  mealie.backend.repos.all_repositories -> mealie.backend.repos._utils
+  mealie.backend.repos.all_repositories -> mealie.backend.repos.repository_factory
+  mealie.backend.repos.repository_cookbooks -> mealie.backend.db.models.household.cookbook
+  mealie.backend.repos.repository_cookbooks -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_cookbooks -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.repos.repository_cookbooks -> mealie.backend.schema.response.responses
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.group_
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.group_.exports
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.group_.preferences
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.cookbook
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.events
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.household
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.household_to_recipe
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.invite_tokens
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.mealplan
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.preferences
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.recipe_action
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.shopping_list
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.household.webhooks
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.labels
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.category
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.comment
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.recipe_timeline
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.shared
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.recipe.tool
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.users
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.users.password_reset
+  mealie.backend.repos.repository_factory -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.repos.repository_factory -> mealie.backend.repos._utils
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_cookbooks
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_foods
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_group
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_household
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_meal_plan_rules
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_meals
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_recipes
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_shopping_list
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_units
+  mealie.backend.repos.repository_factory -> mealie.backend.repos.repository_users
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.group_.group_exports
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.group_events
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.group_recipe_action
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.group_shopping_list
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.household
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.household_preferences
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.invite_token
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.household.webhook
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.labels
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.meal_plan.new_meal
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.meal_plan.plan_rules
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.recipe
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.recipe.recipe_share_token
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.recipe.recipe_timeline_events
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.reports.reports
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.user
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.user.user
+  mealie.backend.repos.repository_factory -> mealie.backend.schema.user.user_passwords
+  mealie.backend.repos.repository_foods -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.repos.repository_foods -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_foods -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.repos.repository_generic -> mealie.backend.core.root_logger
+  mealie.backend.repos.repository_generic -> mealie.backend.db.models._model_base
+  mealie.backend.repos.repository_generic -> mealie.backend.repos._utils
+  mealie.backend.repos.repository_generic -> mealie.backend.schema._mealie
+  mealie.backend.repos.repository_generic -> mealie.backend.schema.response.pagination
+  mealie.backend.repos.repository_generic -> mealie.backend.schema.response.query_search
+  mealie.backend.repos.repository_generic -> mealie.backend.services.query_filter.builder
+  mealie.backend.repos.repository_group -> mealie.backend.db.models.group_
+  mealie.backend.repos.repository_group -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_group -> mealie.backend.schema.user.user
+  mealie.backend.repos.repository_household -> mealie.backend.db.models._model_base
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.household
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.recipe.category
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.recipe.tool
+  mealie.backend.repos.repository_household -> mealie.backend.db.models.users.users
+  mealie.backend.repos.repository_household -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_household -> mealie.backend.schema.household
+  mealie.backend.repos.repository_meal_plan_rules -> mealie.backend.db.models.household.mealplan
+  mealie.backend.repos.repository_meal_plan_rules -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_meal_plan_rules -> mealie.backend.schema.meal_plan.plan_rules
+  mealie.backend.repos.repository_meals -> mealie.backend.db.models.household
+  mealie.backend.repos.repository_meals -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_meals -> mealie.backend.schema.meal_plan.new_meal
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models._model_base
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.household
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.category
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.settings
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.tag_
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.recipe.tool
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.repos.repository_recipes -> mealie.backend.db.models.users.users
+  mealie.backend.repos.repository_recipes -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.recipe
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.recipe.recipe
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.recipe.recipe_suggestion
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.recipe.recipe_tool
+  mealie.backend.repos.repository_recipes -> mealie.backend.schema.response.pagination
+  mealie.backend.repos.repository_recipes -> mealie.backend.services.query_filter.builder
+  mealie.backend.repos.repository_shopping_list -> mealie.backend.db.models.household.shopping_list
+  mealie.backend.repos.repository_shopping_list -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_shopping_list -> mealie.backend.schema.household.group_shopping_list
+  mealie.backend.repos.repository_units -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.repos.repository_units -> mealie.backend.lang.providers
+  mealie.backend.repos.repository_units -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_units -> mealie.backend.repos.seed.seeders
+  mealie.backend.repos.repository_units -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.repos.repository_users -> mealie.backend.assets.users
+  mealie.backend.repos.repository_users -> mealie.backend.core.config
+  mealie.backend.repos.repository_users -> mealie.backend.db.models.users
+  mealie.backend.repos.repository_users -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.repos.repository_users -> mealie.backend.repos.repository_generic
+  mealie.backend.repos.repository_users -> mealie.backend.schema.user.user
+  mealie.backend.repos.seed._abstract_seeder -> mealie.backend.core.root_logger
+  mealie.backend.repos.seed._abstract_seeder -> mealie.backend.repos.repository_factory
+  mealie.backend.repos.seed.init_users -> mealie.backend.core.config
+  mealie.backend.repos.seed.init_users -> mealie.backend.core.root_logger
+  mealie.backend.repos.seed.init_users -> mealie.backend.core.security
+  mealie.backend.repos.seed.init_users -> mealie.backend.repos.repository_factory
+  mealie.backend.repos.seed.seeders -> mealie.backend.repos.seed._abstract_seeder
+  mealie.backend.repos.seed.seeders -> mealie.backend.repos.seed.resources.foods
+  mealie.backend.repos.seed.seeders -> mealie.backend.repos.seed.resources.units
+  mealie.backend.repos.seed.seeders -> mealie.backend.schema.labels
+  mealie.backend.repos.seed.seeders -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.repos.seed.seeders -> mealie.backend.services.group_services.labels_service
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.config
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.exceptions
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.root_logger
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.settings.directories
+  mealie.backend.routes._base.base_controllers -> mealie.backend.core.settings.settings
+  mealie.backend.routes._base.base_controllers -> mealie.backend.db.db_setup
+  mealie.backend.routes._base.base_controllers -> mealie.backend.lang
+  mealie.backend.routes._base.base_controllers -> mealie.backend.lang.locale_config
+  mealie.backend.routes._base.base_controllers -> mealie.backend.lang.providers
+  mealie.backend.routes._base.base_controllers -> mealie.backend.repos._utils
+  mealie.backend.routes._base.base_controllers -> mealie.backend.repos.all_repositories
+  mealie.backend.routes._base.base_controllers -> mealie.backend.routes._base.checks
+  mealie.backend.routes._base.base_controllers -> mealie.backend.schema.household.household
+  mealie.backend.routes._base.base_controllers -> mealie.backend.schema.user.user
+  mealie.backend.routes._base.base_controllers -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.routes._base.base_controllers -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes._base.checks -> mealie.backend.schema.user.user
+  mealie.backend.routes._base.mixins -> mealie.backend.repos.repository_generic
+  mealie.backend.routes._base.mixins -> mealie.backend.schema.response
+  mealie.backend.routes._base.routers -> mealie.backend.core.dependencies
+  mealie.backend.routes.admin -> mealie.backend.routes._base.routers
+  mealie.backend.routes.admin.admin_about -> mealie.backend.core.release_checker
+  mealie.backend.routes.admin.admin_about -> mealie.backend.core.settings.static_
+  mealie.backend.routes.admin.admin_about -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_about -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_about -> mealie.backend.schema.admin.about
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.core.config
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.core.root_logger
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.core.security
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.pkgs.stats.fs_stats
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.schema.admin.backup
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.schema.response.responses
+  mealie.backend.routes.admin.admin_backups -> mealie.backend.services.backups_v2.backup_v2
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.schema.admin.debug
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.schema.openai.general
+  mealie.backend.routes.admin.admin_debug -> mealie.backend.services.openai
+  mealie.backend.routes.admin.admin_email -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_email -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_email -> mealie.backend.schema.admin.email
+  mealie.backend.routes.admin.admin_email -> mealie.backend.services.email
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.pkgs.stats.fs_stats
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.schema.admin
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.schema.admin.maintenance
+  mealie.backend.routes.admin.admin_maintenance -> mealie.backend.schema.response
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.schema.group_.group_
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.schema.mapper
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.schema.response.responses
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.schema.user.user
+  mealie.backend.routes.admin.admin_management_groups -> mealie.backend.services.group_services.group_service
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.db.models.users.users
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.schema.household.household
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.schema.mapper
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.schema.response.responses
+  mealie.backend.routes.admin.admin_management_households -> mealie.backend.services.household_services.household_service
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.core.security
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.routes._base
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.routes._base.controller
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.schema.response.responses
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.schema.user.auth
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.schema.user.user
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.schema.user.user_passwords
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.services.user_services.password_reset_service
+  mealie.backend.routes.admin.admin_management_users -> mealie.backend.services.user_services.user_service
+  mealie.backend.routes.app.app_about -> mealie.backend.core.config
+  mealie.backend.routes.app.app_about -> mealie.backend.core.settings.static_
+  mealie.backend.routes.app.app_about -> mealie.backend.db.db_setup
+  mealie.backend.routes.app.app_about -> mealie.backend.db.models.users.users
+  mealie.backend.routes.app.app_about -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.app.app_about -> mealie.backend.schema.admin.about
+  mealie.backend.routes.auth.auth -> mealie.backend.core.config
+  mealie.backend.routes.auth.auth -> mealie.backend.core.dependencies
+  mealie.backend.routes.auth.auth -> mealie.backend.core.exceptions
+  mealie.backend.routes.auth.auth -> mealie.backend.core.root_logger
+  mealie.backend.routes.auth.auth -> mealie.backend.core.security
+  mealie.backend.routes.auth.auth -> mealie.backend.core.security.providers.openid_provider
+  mealie.backend.routes.auth.auth -> mealie.backend.core.security.security
+  mealie.backend.routes.auth.auth -> mealie.backend.db.db_setup
+  mealie.backend.routes.auth.auth -> mealie.backend.lang
+  mealie.backend.routes.auth.auth -> mealie.backend.routes._base.routers
+  mealie.backend.routes.auth.auth -> mealie.backend.routes.auth.auth_cache
+  mealie.backend.routes.auth.auth -> mealie.backend.schema.user
+  mealie.backend.routes.auth.auth -> mealie.backend.schema.user.auth
+  mealie.backend.routes.comments -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.comments -> mealie.backend.routes._base.controller
+  mealie.backend.routes.comments -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.comments -> mealie.backend.schema.recipe.recipe_comments
+  mealie.backend.routes.comments -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.comments -> mealie.backend.schema.response.responses
+  mealie.backend.routes.explore.controller_public_cookbooks -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.explore.controller_public_cookbooks -> mealie.backend.routes._base.controller
+  mealie.backend.routes.explore.controller_public_cookbooks -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.routes.explore.controller_public_cookbooks -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.explore.controller_public_cookbooks -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.explore.controller_public_foods -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.explore.controller_public_foods -> mealie.backend.routes._base.controller
+  mealie.backend.routes.explore.controller_public_foods -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.explore.controller_public_foods -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.routes.explore.controller_public_foods -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.explore.controller_public_households -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.explore.controller_public_households -> mealie.backend.routes._base.controller
+  mealie.backend.routes.explore.controller_public_households -> mealie.backend.schema.household.household
+  mealie.backend.routes.explore.controller_public_households -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.explore.controller_public_households -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.routes._base.controller
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.schema.recipe.recipe_tool
+  mealie.backend.routes.explore.controller_public_organizers -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.routes._base.controller
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.routes.recipe.recipe_crud_routes
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.recipe
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.recipe.recipe_suggestion
+  mealie.backend.routes.explore.controller_public_recipes -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.groups.controller_group_households -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.groups.controller_group_households -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_group_households -> mealie.backend.routes._base.routers
+  mealie.backend.routes.groups.controller_group_households -> mealie.backend.schema.household.household
+  mealie.backend.routes.groups.controller_group_households -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.core.exceptions
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.schema.reports.reports
+  mealie.backend.routes.groups.controller_group_reports -> mealie.backend.schema.response.responses
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.routes._base.routers
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.schema.group_.group_statistics
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.schema.user.user
+  mealie.backend.routes.groups.controller_group_self_service -> mealie.backend.services.group_services.group_service
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.routes._base.routers
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.schema.labels
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.schema.labels.multi_purpose_label
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.groups.controller_labels -> mealie.backend.services.group_services.labels_service
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.core.dependencies
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.routes._base
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.routes._base.routers
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.schema.group_.group_migration
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.schema.reports.reports
+  mealie.backend.routes.groups.controller_migrations -> mealie.backend.services.migrations
+  mealie.backend.routes.groups.controller_seeder -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.groups.controller_seeder -> mealie.backend.routes._base.controller
+  mealie.backend.routes.groups.controller_seeder -> mealie.backend.schema.group_.group_seeder
+  mealie.backend.routes.groups.controller_seeder -> mealie.backend.schema.response.responses
+  mealie.backend.routes.groups.controller_seeder -> mealie.backend.services.seeder.seeder_service
+  mealie.backend.routes.handlers -> mealie.backend.core.config
+  mealie.backend.routes.handlers -> mealie.backend.core.root_logger
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.core.exceptions
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.routes._base
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.routes._base.routers
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.schema.cookbook
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.schema.mapper
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_cookbooks -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.routes._base.routers
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.schema.household.group_events
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.schema.mapper
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.services.event_bus_service.event_bus_listeners
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.routes.households.controller_group_notifications -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.core.exceptions
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.schema.household.group_recipe_action
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.schema.response
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_group_recipe_actions -> mealie.backend.services.recipe.recipe_service
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.routes._base.routers
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.household
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.household.household_permissions
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.household.household_preferences
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.household.household_statistics
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.schema.user.user
+  mealie.backend.routes.households.controller_household_self_service -> mealie.backend.services.household_services.household_service
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.core.config
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.core.security
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.routes._base
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.schema.household.invite_token
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_invitations -> mealie.backend.services.email.email_service
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.core.exceptions
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.repos.repository_meals
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.mapper
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.meal_plan
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.meal_plan.new_meal
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.meal_plan.plan_rules
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.schema.response.responses
+  mealie.backend.routes.households.controller_mealplan -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.routes._base.routers
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.schema.mapper
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.schema.meal_plan.plan_rules
+  mealie.backend.routes.households.controller_mealplan_rules -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.schema.household.group_shopping_list
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.schema.response.responses
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.households.controller_shopping_lists -> mealie.backend.services.household_services.shopping_lists
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.routes._base.controller
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.schema.household.webhook
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.schema.mapper
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.households.controller_webhooks -> mealie.backend.services.scheduler.tasks.post_webhooks
+  mealie.backend.routes.media -> mealie.backend.core.config
+  mealie.backend.routes.media.media_recipe -> mealie.backend.schema.recipe
+  mealie.backend.routes.media.media_recipe -> mealie.backend.schema.recipe.recipe_timeline_events
+  mealie.backend.routes.media.media_user -> mealie.backend.schema.user
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.routes._base
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.routes._base.controller
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.schema.mapper
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.schema.recipe
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.organizers.controller_categories -> mealie.backend.services.urls
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.routes._base
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.routes._base.controller
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.schema.mapper
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.schema.recipe
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.organizers.controller_tags -> mealie.backend.services.urls
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.routes._base.controller
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.schema.mapper
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.schema.recipe.recipe_tool
+  mealie.backend.routes.organizers.controller_tools -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.routes._base
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.routes._base.controller
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.schema.recipe
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.routes.parser.ingredient_parser -> mealie.backend.services.parser_services
+  mealie.backend.routes.recipe._base -> mealie.backend.db.models.household.cookbook
+  mealie.backend.routes.recipe._base -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.recipe._base -> mealie.backend.repos.repository_generic
+  mealie.backend.routes.recipe._base -> mealie.backend.repos.repository_recipes
+  mealie.backend.routes.recipe._base -> mealie.backend.routes._base
+  mealie.backend.routes.recipe._base -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.recipe._base -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.routes.recipe._base -> mealie.backend.schema.recipe
+  mealie.backend.routes.recipe._base -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.recipe._base -> mealie.backend.services.recipe.recipe_service
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.core.exceptions
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.core.security
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.routes._base
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.routes._base.controller
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.schema.group_.group_exports
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.schema.recipe.recipe_bulk_actions
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.schema.response.responses
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.services.recipe.recipe_bulk_service
+  mealie.backend.routes.recipe.bulk_actions -> mealie.backend.services.recipe.recipe_service
+  mealie.backend.routes.recipe.comments -> mealie.backend.routes._base
+  mealie.backend.routes.recipe.comments -> mealie.backend.routes._base.controller
+  mealie.backend.routes.recipe.comments -> mealie.backend.routes._base.routers
+  mealie.backend.routes.recipe.comments -> mealie.backend.schema.recipe.recipe_comments
+  mealie.backend.routes.recipe.exports -> mealie.backend.core.dependencies
+  mealie.backend.routes.recipe.exports -> mealie.backend.routes._base.controller
+  mealie.backend.routes.recipe.exports -> mealie.backend.routes._base.routers
+  mealie.backend.routes.recipe.exports -> mealie.backend.routes.recipe._base
+  mealie.backend.routes.recipe.exports -> mealie.backend.services.recipe.template_service
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.core.dependencies
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.core.exceptions
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.pkgs.cache
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.routes._base.controller
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.routes._base.routers
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.routes.recipe._base
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.cookbook.cookbook
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.make_dependable
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe.recipe_asset
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe.recipe_scraper
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe.recipe_suggestion
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.recipe.request_helpers
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.response
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.schema.response.responses
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.recipe.recipe_data_service
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.scraper.recipe_bulk_scraper
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.scraper.scraped_extras
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.scraper.scraper
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.scraper.scraper_strategies
+  mealie.backend.routes.recipe.recipe_crud_routes -> mealie.backend.services.urls
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.core.dependencies
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.core.root_logger
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.db.db_setup
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.schema.recipe
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.schema.recipe.recipe_image_types
+  mealie.backend.routes.recipe.shared_routes -> mealie.backend.schema.response
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.routes._base
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.routes._base.controller
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.routes._base.routers
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.schema.recipe.recipe_timeline_events
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.schema.recipe.request_helpers
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.services.recipe.recipe_data_service
+  mealie.backend.routes.recipe.timeline_events -> mealie.backend.services.urls
+  mealie.backend.routes.shared -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.shared -> mealie.backend.routes._base
+  mealie.backend.routes.shared -> mealie.backend.routes._base.controller
+  mealie.backend.routes.shared -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.shared -> mealie.backend.routes._base.routers
+  mealie.backend.routes.shared -> mealie.backend.schema.recipe
+  mealie.backend.routes.shared -> mealie.backend.schema.recipe.recipe_share_token
+  mealie.backend.routes.spa -> mealie.backend.core.config
+  mealie.backend.routes.spa -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.routes.spa -> mealie.backend.db.db_setup
+  mealie.backend.routes.spa -> mealie.backend.repos.repository_factory
+  mealie.backend.routes.spa -> mealie.backend.schema.recipe.recipe
+  mealie.backend.routes.spa -> mealie.backend.schema.user.user
+  mealie.backend.routes.spa.manifest -> mealie.backend.core.config
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.routes._base.controller
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.routes._base.routers
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.schema.mapper
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.unit_and_foods.foods -> mealie.backend.schema.response.responses
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.routes._base.base_controllers
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.routes._base.controller
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.routes._base.mixins
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.routes._base.routers
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.schema.mapper
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.schema.response.pagination
+  mealie.backend.routes.unit_and_foods.units -> mealie.backend.schema.response.responses
+  mealie.backend.routes.users._helpers -> mealie.backend.schema.response.responses
+  mealie.backend.routes.users._helpers -> mealie.backend.schema.user.user
+  mealie.backend.routes.users.api_tokens -> mealie.backend.core.security
+  mealie.backend.routes.users.api_tokens -> mealie.backend.routes._base
+  mealie.backend.routes.users.api_tokens -> mealie.backend.routes._base.controller
+  mealie.backend.routes.users.api_tokens -> mealie.backend.routes._base.routers
+  mealie.backend.routes.users.api_tokens -> mealie.backend.schema.user
+  mealie.backend.routes.users.crud -> mealie.backend.core.security
+  mealie.backend.routes.users.crud -> mealie.backend.core.security.providers.credentials_provider
+  mealie.backend.routes.users.crud -> mealie.backend.db.models.users.users
+  mealie.backend.routes.users.crud -> mealie.backend.routes._base
+  mealie.backend.routes.users.crud -> mealie.backend.routes._base.controller
+  mealie.backend.routes.users.crud -> mealie.backend.routes._base.routers
+  mealie.backend.routes.users.crud -> mealie.backend.routes.users._helpers
+  mealie.backend.routes.users.crud -> mealie.backend.schema.response
+  mealie.backend.routes.users.crud -> mealie.backend.schema.user
+  mealie.backend.routes.users.crud -> mealie.backend.schema.user.user
+  mealie.backend.routes.users.forgot_password -> mealie.backend.db.db_setup
+  mealie.backend.routes.users.forgot_password -> mealie.backend.schema.user.user_passwords
+  mealie.backend.routes.users.forgot_password -> mealie.backend.services.user_services.password_reset_service
+  mealie.backend.routes.users.images -> mealie.backend.core.dependencies
+  mealie.backend.routes.users.images -> mealie.backend.pkgs.cache
+  mealie.backend.routes.users.images -> mealie.backend.pkgs.img
+  mealie.backend.routes.users.images -> mealie.backend.routes._base
+  mealie.backend.routes.users.images -> mealie.backend.routes._base.controller
+  mealie.backend.routes.users.images -> mealie.backend.routes._base.routers
+  mealie.backend.routes.users.images -> mealie.backend.routes.users._helpers
+  mealie.backend.routes.users.images -> mealie.backend.schema.user
+  mealie.backend.routes.users.ratings -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.users.ratings -> mealie.backend.routes._base
+  mealie.backend.routes.users.ratings -> mealie.backend.routes._base.controller
+  mealie.backend.routes.users.ratings -> mealie.backend.routes._base.routers
+  mealie.backend.routes.users.ratings -> mealie.backend.routes.users._helpers
+  mealie.backend.routes.users.ratings -> mealie.backend.schema.response.responses
+  mealie.backend.routes.users.ratings -> mealie.backend.schema.user.user
+  mealie.backend.routes.users.registration -> mealie.backend.core.config
+  mealie.backend.routes.users.registration -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.users.registration -> mealie.backend.routes._base
+  mealie.backend.routes.users.registration -> mealie.backend.routes._base.controller
+  mealie.backend.routes.users.registration -> mealie.backend.schema.response
+  mealie.backend.routes.users.registration -> mealie.backend.schema.user.registration
+  mealie.backend.routes.users.registration -> mealie.backend.schema.user.user
+  mealie.backend.routes.users.registration -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.routes.users.registration -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.routes.users.registration -> mealie.backend.services.user_services.registration_service
+  mealie.backend.routes.utility_routes -> mealie.backend.core.config
+  mealie.backend.routes.utility_routes -> mealie.backend.core.dependencies
+  mealie.backend.routes.validators.validators -> mealie.backend.db.db_setup
+  mealie.backend.routes.validators.validators -> mealie.backend.repos.all_repositories
+  mealie.backend.routes.validators.validators -> mealie.backend.schema.response
+  mealie.backend.schema._mealie.mealie_model -> mealie.backend.db.models._model_base
+  mealie.backend.schema.admin.about -> mealie.backend.schema._mealie
+  mealie.backend.schema.admin.debug -> mealie.backend.schema._mealie
+  mealie.backend.schema.admin.email -> mealie.backend.schema._mealie
+  mealie.backend.schema.admin.maintenance -> mealie.backend.schema._mealie
+  mealie.backend.schema.admin.migration -> mealie.backend.schema.admin.restore
+  mealie.backend.schema.analytics.analytics -> mealie.backend.schema._mealie
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.core.root_logger
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.db.models.household.cookbook
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.db.models.recipe
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.schema._mealie
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.cookbook.cookbook -> mealie.backend.services.query_filter.builder
+  mealie.backend.schema.group_.group_ -> mealie.backend.schema._mealie
+  mealie.backend.schema.group_.group_ -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.schema.group_.group_exports -> mealie.backend.schema._mealie
+  mealie.backend.schema.group_.group_migration -> mealie.backend.schema._mealie
+  mealie.backend.schema.group_.group_preferences -> mealie.backend.schema._mealie
+  mealie.backend.schema.group_.group_seeder -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.group_.group_seeder -> mealie.backend.schema._mealie.validators
+  mealie.backend.schema.group_.group_statistics -> mealie.backend.pkgs.stats.fs_stats
+  mealie.backend.schema.group_.group_statistics -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.group_events -> mealie.backend.db.models.household
+  mealie.backend.schema.household.group_events -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.group_events -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.household.group_recipe_action -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.group_recipe_action -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.db.models.household
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.db.models.recipe
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.db.models.users.users
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema._mealie.types
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema.labels.multi_purpose_label
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.schema.household.group_shopping_list -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.household.household -> mealie.backend.db.models.household
+  mealie.backend.schema.household.household -> mealie.backend.db.models.users.users
+  mealie.backend.schema.household.household -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.household.household -> mealie.backend.schema.household.household_preferences
+  mealie.backend.schema.household.household -> mealie.backend.schema.household.webhook
+  mealie.backend.schema.household.household -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.household.household_permissions -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.household_preferences -> mealie.backend.db.models.household.household
+  mealie.backend.schema.household.household_preferences -> mealie.backend.db.models.household.preferences
+  mealie.backend.schema.household.household_preferences -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.household_statistics -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.household.invite_token -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.webhook -> mealie.backend.schema._mealie
+  mealie.backend.schema.household.webhook -> mealie.backend.schema._mealie.datetime_parse
+  mealie.backend.schema.household.webhook -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.labels.multi_purpose_label -> mealie.backend.schema._mealie
+  mealie.backend.schema.labels.multi_purpose_label -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.db.models.household
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.db.models.recipe
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.db.models.users.users
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.schema._mealie
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.meal_plan.new_meal -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.meal_plan.plan_rules -> mealie.backend.core.root_logger
+  mealie.backend.schema.meal_plan.plan_rules -> mealie.backend.db.models.recipe
+  mealie.backend.schema.meal_plan.plan_rules -> mealie.backend.schema._mealie
+  mealie.backend.schema.meal_plan.plan_rules -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.meal_plan.plan_rules -> mealie.backend.services.query_filter.builder
+  mealie.backend.schema.meal_plan.shopping_list -> mealie.backend.schema._mealie
+  mealie.backend.schema.openai._base -> mealie.backend.core.root_logger
+  mealie.backend.schema.openai.general -> mealie.backend.schema.openai._base
+  mealie.backend.schema.openai.recipe -> mealie.backend.schema.openai._base
+  mealie.backend.schema.openai.recipe_ingredient -> mealie.backend.schema.openai._base
+  mealie.backend.schema.recipe.recipe -> mealie.backend.core.config
+  mealie.backend.schema.recipe.recipe -> mealie.backend.core.exceptions
+  mealie.backend.schema.recipe.recipe -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe -> mealie.backend.db.models.users.users
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_asset
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_comments
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_notes
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_nutrition
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_settings
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.recipe.recipe_step
+  mealie.backend.schema.recipe.recipe -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.recipe.recipe_asset -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_bulk_actions -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_bulk_actions -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.schema.recipe.recipe_bulk_actions -> mealie.backend.schema.recipe.recipe_settings
+  mealie.backend.schema.recipe.recipe_category -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe_category -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_category -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.recipe_comments -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe_comments -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.schema.recipe.recipe_comments -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_comments -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe_comments -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.lang.locale_config
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.lang.providers
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema._mealie.types
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema.labels.multi_purpose_label
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.recipe_ingredient -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.recipe.recipe_nutrition -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_scraper -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe_settings -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_share_token -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe_share_token -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_share_token -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.recipe_step -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_suggestion -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe_suggestion -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.recipe_suggestion -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.schema.recipe.recipe_suggestion -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.core.config
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.db.models.recipe.recipe_timeline
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.db.models.users.users
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.recipe_timeline_events -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.recipe.recipe_tool -> mealie.backend.db.models.recipe
+  mealie.backend.schema.recipe.recipe_tool -> mealie.backend.schema._mealie
+  mealie.backend.schema.recipe.recipe_tool -> mealie.backend.schema.recipe.recipe
+  mealie.backend.schema.recipe.request_helpers -> mealie.backend.schema._mealie
+  mealie.backend.schema.reports.reports -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.schema.reports.reports -> mealie.backend.db.models.group_
+  mealie.backend.schema.reports.reports -> mealie.backend.schema._mealie
+  mealie.backend.schema.response.pagination -> mealie.backend.schema._mealie
+  mealie.backend.schema.response.query_search -> mealie.backend.db.models._model_base
+  mealie.backend.schema.response.query_search -> mealie.backend.schema._mealie
+  mealie.backend.schema.response.responses -> mealie.backend.schema._mealie
+  mealie.backend.schema.user.auth -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.schema.user.registration -> mealie.backend.schema._mealie
+  mealie.backend.schema.user.registration -> mealie.backend.schema._mealie.validators
+  mealie.backend.schema.user.user -> mealie.backend.core.config
+  mealie.backend.schema.user.user -> mealie.backend.db.models.group_
+  mealie.backend.schema.user.user -> mealie.backend.db.models.recipe.recipe
+  mealie.backend.schema.user.user -> mealie.backend.db.models.users
+  mealie.backend.schema.user.user -> mealie.backend.db.models.users.user_to_recipe
+  mealie.backend.schema.user.user -> mealie.backend.db.models.users.users
+  mealie.backend.schema.user.user -> mealie.backend.schema._mealie
+  mealie.backend.schema.user.user -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.schema.user.user -> mealie.backend.schema.household.webhook
+  mealie.backend.schema.user.user -> mealie.backend.schema.recipe
+  mealie.backend.schema.user.user -> mealie.backend.schema.response.pagination
+  mealie.backend.schema.user.user_passwords -> mealie.backend.db.models.users
+  mealie.backend.schema.user.user_passwords -> mealie.backend.schema._mealie
+  mealie.backend.schema.user.user_passwords -> mealie.backend.schema.user.user
+  mealie.backend.services._base_service -> mealie.backend.core.config
+  mealie.backend.services._base_service -> mealie.backend.core.root_logger
+  mealie.backend.services.backups_v2.alchemy_exporter -> mealie.backend.db.init_db
+  mealie.backend.services.backups_v2.alchemy_exporter -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.services.backups_v2.alchemy_exporter -> mealie.backend.services._base_service
+  mealie.backend.services.backups_v2.backup_v2 -> mealie.backend.core.config
+  mealie.backend.services.backups_v2.backup_v2 -> mealie.backend.services._base_service
+  mealie.backend.services.backups_v2.backup_v2 -> mealie.backend.services.backups_v2.alchemy_exporter
+  mealie.backend.services.backups_v2.backup_v2 -> mealie.backend.services.backups_v2.backup_file
+  mealie.backend.services.email.email_senders -> mealie.backend.services._base_service
+  mealie.backend.services.email.email_service -> mealie.backend.core.root_logger
+  mealie.backend.services.email.email_service -> mealie.backend.lang
+  mealie.backend.services.email.email_service -> mealie.backend.lang.providers
+  mealie.backend.services.email.email_service -> mealie.backend.services._base_service
+  mealie.backend.services.email.email_service -> mealie.backend.services.email.email_senders
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.db.db_setup
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.db.models.household.webhooks
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.repos.repository_factory
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.schema.household.group_events
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.schema.household.webhook
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.event_bus_service.event_bus_listeners -> mealie.backend.services.event_bus_service.publisher
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.core.config
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.db.db_setup
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.schema.response.pagination
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.services.event_bus_service.event_bus_listeners
+  mealie.backend.services.event_bus_service.event_bus_service -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.event_bus_service.event_types -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.services.event_bus_service.publisher -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.exporter._abc_exporter -> mealie.backend.core.root_logger
+  mealie.backend.services.exporter._abc_exporter -> mealie.backend.repos.all_repositories
+  mealie.backend.services.exporter._abc_exporter -> mealie.backend.schema.reports.reports
+  mealie.backend.services.exporter._abc_exporter -> mealie.backend.services._base_service
+  mealie.backend.services.exporter.exporter -> mealie.backend.pkgs.stats.fs_stats
+  mealie.backend.services.exporter.exporter -> mealie.backend.repos.all_repositories
+  mealie.backend.services.exporter.exporter -> mealie.backend.schema.group_.group_exports
+  mealie.backend.services.exporter.exporter -> mealie.backend.schema.user
+  mealie.backend.services.exporter.exporter -> mealie.backend.services._base_service
+  mealie.backend.services.exporter.exporter -> mealie.backend.services.exporter._abc_exporter
+  mealie.backend.services.exporter.recipe_exporter -> mealie.backend.repos.all_repositories
+  mealie.backend.services.exporter.recipe_exporter -> mealie.backend.schema.recipe
+  mealie.backend.services.exporter.recipe_exporter -> mealie.backend.services.exporter._abc_exporter
+  mealie.backend.services.group_services.group_service -> mealie.backend.core.config
+  mealie.backend.services.group_services.group_service -> mealie.backend.pkgs.stats.fs_stats
+  mealie.backend.services.group_services.group_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.group_services.group_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.group_services.group_service -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.services.group_services.group_service -> mealie.backend.schema.group_.group_statistics
+  mealie.backend.services.group_services.group_service -> mealie.backend.schema.household.household
+  mealie.backend.services.group_services.group_service -> mealie.backend.schema.household.household_preferences
+  mealie.backend.services.group_services.group_service -> mealie.backend.schema.user.user
+  mealie.backend.services.group_services.group_service -> mealie.backend.services._base_service
+  mealie.backend.services.group_services.group_service -> mealie.backend.services.household_services.household_service
+  mealie.backend.services.group_services.labels_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.group_services.labels_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.group_services.labels_service -> mealie.backend.schema.household.group_shopping_list
+  mealie.backend.services.group_services.labels_service -> mealie.backend.schema.labels.multi_purpose_label
+  mealie.backend.services.group_services.labels_service -> mealie.backend.schema.response.pagination
+  mealie.backend.services.household_services.household_service -> mealie.backend.core.exceptions
+  mealie.backend.services.household_services.household_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.household_services.household_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.household_services.household_service -> mealie.backend.schema.household
+  mealie.backend.services.household_services.household_service -> mealie.backend.schema.household.household
+  mealie.backend.services.household_services.household_service -> mealie.backend.schema.household.household_preferences
+  mealie.backend.services.household_services.household_service -> mealie.backend.schema.household.household_statistics
+  mealie.backend.services.household_services.household_service -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.household_services.household_service -> mealie.backend.services._base_service
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.core.exceptions
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.repos.all_repositories
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.repos.repository_factory
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.schema.household.group_shopping_list
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.schema.response.pagination
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.services.parser_services._base
+  mealie.backend.services.household_services.shopping_lists -> mealie.backend.services.parser_services.parser_utils
+  mealie.backend.services.migrations._migration_base -> mealie.backend.core.exceptions
+  mealie.backend.services.migrations._migration_base -> mealie.backend.core.root_logger
+  mealie.backend.services.migrations._migration_base -> mealie.backend.lang.providers
+  mealie.backend.services.migrations._migration_base -> mealie.backend.repos.all_repositories
+  mealie.backend.services.migrations._migration_base -> mealie.backend.schema.recipe
+  mealie.backend.services.migrations._migration_base -> mealie.backend.schema.recipe.recipe_settings
+  mealie.backend.services.migrations._migration_base -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services._base_service
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services.migrations.utils.database_helpers
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services.recipe.recipe_service
+  mealie.backend.services.migrations._migration_base -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.migrations.chowdown -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.chowdown -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.chowdown -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.cookn -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.migrations.cookn -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations.cookn -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.cookn -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.cookn -> mealie.backend.services.parser_services._base
+  mealie.backend.services.migrations.cookn -> mealie.backend.services.parser_services.parser_utils.string_utils
+  mealie.backend.services.migrations.copymethat -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations.copymethat -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.copymethat -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.copymethat -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.mealie_alpha -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.migrations.mealie_alpha -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations.mealie_alpha -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.mealie_alpha -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.mealie_alpha -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.myrecipebox -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.migrations.myrecipebox -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.myrecipebox -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.myrecipebox -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.myrecipebox -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.migrations.nextcloud -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations.nextcloud -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.nextcloud -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.nextcloud -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.paprika -> mealie.backend.schema.recipe
+  mealie.backend.services.migrations.paprika -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.paprika -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.plantoeat -> mealie.backend.pkgs.cache.cache_key
+  mealie.backend.services.migrations.plantoeat -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.plantoeat -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.plantoeat -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.plantoeat -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.migrations.recipekeeper -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.recipekeeper -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.recipekeeper -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.recipekeeper -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.migrations.tandoor -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.migrations.tandoor -> mealie.backend.schema.reports.reports
+  mealie.backend.services.migrations.tandoor -> mealie.backend.services.migrations._migration_base
+  mealie.backend.services.migrations.tandoor -> mealie.backend.services.migrations.utils.migration_alias
+  mealie.backend.services.migrations.tandoor -> mealie.backend.services.migrations.utils.migration_helpers
+  mealie.backend.services.migrations.utils.database_helpers -> mealie.backend.repos.all_repositories
+  mealie.backend.services.migrations.utils.database_helpers -> mealie.backend.repos.repository_generic
+  mealie.backend.services.migrations.utils.database_helpers -> mealie.backend.schema.recipe
+  mealie.backend.services.migrations.utils.database_helpers -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.migrations.utils.database_helpers -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.services.migrations.utils.migration_helpers -> mealie.backend.core.root_logger
+  mealie.backend.services.migrations.utils.migration_helpers -> mealie.backend.services.recipe.recipe_data_service
+  mealie.backend.services.openai.openai -> mealie.backend.core.config
+  mealie.backend.services.openai.openai -> mealie.backend.core.exceptions
+  mealie.backend.services.openai.openai -> mealie.backend.core.root_logger
+  mealie.backend.services.openai.openai -> mealie.backend.pkgs.img
+  mealie.backend.services.openai.openai -> mealie.backend.schema.openai._base
+  mealie.backend.services.openai.openai -> mealie.backend.schema.openai.general
+  mealie.backend.services.openai.openai -> mealie.backend.services._base_service
+  mealie.backend.services.parser_services._base -> mealie.backend.db.models.recipe.ingredient
+  mealie.backend.services.parser_services._base -> mealie.backend.lang.providers
+  mealie.backend.services.parser_services._base -> mealie.backend.repos.all_repositories
+  mealie.backend.services.parser_services._base -> mealie.backend.repos.repository_factory
+  mealie.backend.services.parser_services._base -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.parser_services._base -> mealie.backend.schema.response.pagination
+  mealie.backend.services.parser_services.brute.process -> mealie.backend.services.parser_services.parser_utils
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.core.root_logger
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.lang.providers
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.schema.recipe
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.services.parser_services._base
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.services.parser_services.brute
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.services.parser_services.openai
+  mealie.backend.services.parser_services.ingredient_parser -> mealie.backend.services.parser_services.parser_utils
+  mealie.backend.services.parser_services.openai.parser -> mealie.backend.schema.openai.recipe_ingredient
+  mealie.backend.services.parser_services.openai.parser -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.parser_services.openai.parser -> mealie.backend.services.openai
+  mealie.backend.services.parser_services.openai.parser -> mealie.backend.services.parser_services._base
+  mealie.backend.services.parser_services.openai.parser -> mealie.backend.services.parser_services.parser_utils
+  mealie.backend.services.parser_services.parser_utils.unit_utils -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.query_filter.builder -> mealie.backend.db.models._model_base
+  mealie.backend.services.query_filter.builder -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.services.query_filter.builder -> mealie.backend.db.models._model_utils.guid
+  mealie.backend.services.query_filter.builder -> mealie.backend.schema._mealie.mealie_model
+  mealie.backend.services.query_filter.builder -> mealie.backend.services.query_filter.keywords
+  mealie.backend.services.query_filter.builder -> mealie.backend.services.query_filter.operators
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.core.exceptions
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.group_.group_exports
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.recipe
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.recipe.recipe_settings
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.response.pagination
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.schema.user.user
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.services._base_service
+  mealie.backend.services.recipe.recipe_bulk_service -> mealie.backend.services.exporter
+  mealie.backend.services.recipe.recipe_data_service -> mealie.backend.pkgs.img
+  mealie.backend.services.recipe.recipe_data_service -> mealie.backend.pkgs.safehttp
+  mealie.backend.services.recipe.recipe_data_service -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.recipe.recipe_data_service -> mealie.backend.schema.recipe.recipe_image_types
+  mealie.backend.services.recipe.recipe_data_service -> mealie.backend.services._base_service
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.core.config
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.core.exceptions
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.lang.providers
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.pkgs.cache
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.repos.repository_generic
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.household.household
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.openai.recipe
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe_notes
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe_settings
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe_step
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.recipe_timeline_events
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.recipe.request_helpers
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.schema.user.user
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services._base_service
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.household_services.household_service
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.openai
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.recipe.recipe_data_service
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.recipe.template_service
+  mealie.backend.services.recipe.recipe_service -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.recipe.template_service -> mealie.backend.schema.recipe
+  mealie.backend.services.recipe.template_service -> mealie.backend.schema.recipe.recipe_image_types
+  mealie.backend.services.recipe.template_service -> mealie.backend.services._base_service
+  mealie.backend.services.scheduler.scheduler_registry -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.scheduler_service -> mealie.backend.core.config
+  mealie.backend.services.scheduler.scheduler_service -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.scheduler_service -> mealie.backend.services.scheduler.runner
+  mealie.backend.services.scheduler.scheduler_service -> mealie.backend.services.scheduler.scheduler_registry
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.repos.all_repositories
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.household.household
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.meal_plan.new_meal
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.recipe.recipe_timeline_events
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.response.pagination
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.schema.user.user
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.scheduler.tasks.create_timeline_events -> mealie.backend.services.household_services.household_service
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.repos.all_repositories
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.routes.households.controller_shopping_lists
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.schema.response.pagination
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.schema.user.user
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.scheduler.tasks.delete_old_checked_shopping_list_items -> mealie.backend.services.household_services.shopping_lists
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.repos.all_repositories
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.schema.household.webhook
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.schema.response.pagination
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.services.event_bus_service.event_bus_listeners
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.services.event_bus_service.event_bus_service
+  mealie.backend.services.scheduler.tasks.post_webhooks -> mealie.backend.services.event_bus_service.event_types
+  mealie.backend.services.scheduler.tasks.purge_expired_share_tokens -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.purge_expired_share_tokens -> mealie.backend.repos.all_repositories
+  mealie.backend.services.scheduler.tasks.purge_expired_share_tokens -> mealie.backend.schema.response.pagination
+  mealie.backend.services.scheduler.tasks.purge_group_exports -> mealie.backend.core.config
+  mealie.backend.services.scheduler.tasks.purge_group_exports -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.tasks.purge_group_exports -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.purge_group_exports -> mealie.backend.db.models._model_utils.datetime
+  mealie.backend.services.scheduler.tasks.purge_group_exports -> mealie.backend.db.models.group_.exports
+  mealie.backend.services.scheduler.tasks.purge_password_reset -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.tasks.purge_password_reset -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.purge_password_reset -> mealie.backend.db.models.users.password_reset
+  mealie.backend.services.scheduler.tasks.purge_registration -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.tasks.purge_registration -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.purge_registration -> mealie.backend.db.models.household
+  mealie.backend.services.scheduler.tasks.reset_locked_users -> mealie.backend.core.root_logger
+  mealie.backend.services.scheduler.tasks.reset_locked_users -> mealie.backend.db.db_setup
+  mealie.backend.services.scheduler.tasks.reset_locked_users -> mealie.backend.repos.repository_factory
+  mealie.backend.services.scheduler.tasks.reset_locked_users -> mealie.backend.services.user_services.user_service
+  mealie.backend.services.scraper.cleaner -> mealie.backend.core.root_logger
+  mealie.backend.services.scraper.cleaner -> mealie.backend.lang.providers
+  mealie.backend.services.scraper.cleaner -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.scraper.cleaner -> mealie.backend.services.parser_services.parser_utils
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.lang.providers
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.repos.repository_factory
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.schema.reports.reports
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.schema.user.user
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.services._base_service
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.services.recipe.recipe_service
+  mealie.backend.services.scraper.recipe_bulk_scraper -> mealie.backend.services.scraper.scraper
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.core.root_logger
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.lang.providers
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.services.scraper.scraped_extras
+  mealie.backend.services.scraper.recipe_scraper -> mealie.backend.services.scraper.scraper_strategies
+  mealie.backend.services.scraper.scraped_extras -> mealie.backend.repos.repository_factory
+  mealie.backend.services.scraper.scraped_extras -> mealie.backend.schema.recipe
+  mealie.backend.services.scraper.scraped_extras -> mealie.backend.schema.recipe.recipe_category
+  mealie.backend.services.scraper.scraper -> mealie.backend.core.root_logger
+  mealie.backend.services.scraper.scraper -> mealie.backend.lang.providers
+  mealie.backend.services.scraper.scraper -> mealie.backend.pkgs.cache
+  mealie.backend.services.scraper.scraper -> mealie.backend.schema.recipe
+  mealie.backend.services.scraper.scraper -> mealie.backend.services.recipe.recipe_data_service
+  mealie.backend.services.scraper.scraper -> mealie.backend.services.scraper.recipe_scraper
+  mealie.backend.services.scraper.scraper -> mealie.backend.services.scraper.scraped_extras
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.core.config
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.core.dependencies.dependencies
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.core.exceptions
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.core.root_logger
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.lang.providers
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.pkgs.safehttp
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.schema.openai.general
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.schema.openai.recipe
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.schema.recipe.recipe
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.schema.recipe.recipe_ingredient
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.schema.recipe.recipe_notes
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.services.openai
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.services.scraper.cleaner
+  mealie.backend.services.scraper.scraper_strategies -> mealie.backend.services.scraper.scraped_extras
+  mealie.backend.services.seeder.seeder_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.seeder.seeder_service -> mealie.backend.repos.seed.seeders
+  mealie.backend.services.seeder.seeder_service -> mealie.backend.services._base_service
+  mealie.backend.services.urls.url_constructors -> mealie.backend.core.config
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.core.security
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.db.models.users.users
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.schema.user.user_passwords
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.services._base_service
+  mealie.backend.services.user_services.password_reset_service -> mealie.backend.services.email
+  mealie.backend.services.user_services.registration_service -> mealie.backend.core.config
+  mealie.backend.services.user_services.registration_service -> mealie.backend.core.security
+  mealie.backend.services.user_services.registration_service -> mealie.backend.lang.providers
+  mealie.backend.services.user_services.registration_service -> mealie.backend.repos.all_repositories
+  mealie.backend.services.user_services.registration_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.user_services.registration_service -> mealie.backend.schema.group_.group_preferences
+  mealie.backend.services.user_services.registration_service -> mealie.backend.schema.household.household
+  mealie.backend.services.user_services.registration_service -> mealie.backend.schema.household.household_preferences
+  mealie.backend.services.user_services.registration_service -> mealie.backend.schema.user.registration
+  mealie.backend.services.user_services.registration_service -> mealie.backend.schema.user.user
+  mealie.backend.services.user_services.registration_service -> mealie.backend.services.group_services.group_service
+  mealie.backend.services.user_services.registration_service -> mealie.backend.services.household_services.household_service
+  mealie.backend.services.user_services.registration_service -> mealie.backend.services.seeder.seeder_service
+  mealie.backend.services.user_services.user_service -> mealie.backend.repos.repository_factory
+  mealie.backend.services.user_services.user_service -> mealie.backend.schema.user.user
+  mealie.backend.services.user_services.user_service -> mealie.backend.services._base_service
+}

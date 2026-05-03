@@ -1,0 +1,31 @@
+// Auto-generated LikeC4 specification — Mealie
+specification {
+  element actor {
+    style {
+      shape person
+    }
+  }
+  element ext {
+    style {
+      shape rectangle
+      color secondary
+    }
+  }
+  element system
+  element container
+  element component
+  element subpkg {
+    style {
+      color muted
+    }
+  }
+  element mod {
+    style {
+      shape rectangle
+      color slate
+    }
+  }
+  tag python
+  tag frontend
+  tag datastore
+}

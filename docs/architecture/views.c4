@@ -1,0 +1,186 @@
+// Auto-generated LikeC4 views — Mealie
+views {
+
+  view system_context {
+    title 'System Context — Mealie'
+    description 'Actors and external systems that interact with Mealie.'
+    include user, mealie
+    include recipeWebsite, openai, smtp, ldap, oidc, apprise, webhookTarget
+    autoLayout TopBottom
+  }
+
+  view containers of mealie {
+    title 'Containers — Mealie'
+    description 'Internal containers and which external actors each container talks to.'
+    include *
+    include user
+    include recipeWebsite, openai, smtp, ldap, oidc, apprise, webhookTarget
+    autoLayout TopBottom
+  }
+
+  view components_backend of mealie.backend {
+    title 'Components — Backend (mealie.*)'
+    description 'Top-level Python packages of the FastAPI backend, with edges collapsed from the import graph.'
+    include *
+    autoLayout TopBottom
+  }
+
+
+  view code_app of mealie.backend.app {
+    title 'Code — mealie.app'
+    description 'Module-level imports inside mealie.app; sibling components shown as boundary nodes.'
+    include mealie.backend.app
+    include mealie.backend.core
+    include mealie.backend.db
+    include mealie.backend.main
+    include mealie.backend.middleware
+    include mealie.backend.routes
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_assets of mealie.backend.assets {
+    title 'Code — mealie.assets'
+    description 'Module-level imports inside mealie.assets; sibling components shown as boundary nodes.'
+    include mealie.backend.assets
+    include mealie.backend.assets.**
+    include mealie.backend.repos
+    autoLayout LeftRight
+  }
+
+  view code_core of mealie.backend.core {
+    title 'Code — mealie.core'
+    description 'Module-level imports inside mealie.core; sibling components shown as boundary nodes.'
+    include mealie.backend.core
+    include mealie.backend.core.**
+    include mealie.backend.app
+    include mealie.backend.db
+    include mealie.backend.lang
+    include mealie.backend.repos
+    include mealie.backend.routes
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_db of mealie.backend.db {
+    title 'Code — mealie.db'
+    description 'Module-level imports inside mealie.db; sibling components shown as boundary nodes.'
+    include mealie.backend.db
+    include mealie.backend.db.**
+    include mealie.backend.app
+    include mealie.backend.core
+    include mealie.backend.repos
+    include mealie.backend.routes
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_lang of mealie.backend.lang {
+    title 'Code — mealie.lang'
+    description 'Module-level imports inside mealie.lang; sibling components shown as boundary nodes.'
+    include mealie.backend.lang
+    include mealie.backend.lang.**
+    include mealie.backend.core
+    include mealie.backend.middleware
+    include mealie.backend.pkgs
+    include mealie.backend.repos
+    include mealie.backend.routes
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_main of mealie.backend.main {
+    title 'Code — mealie.main'
+    description 'Module-level imports inside mealie.main; sibling components shown as boundary nodes.'
+    include mealie.backend.main
+    include mealie.backend.app
+    autoLayout LeftRight
+  }
+
+  view code_middleware of mealie.backend.middleware {
+    title 'Code — mealie.middleware'
+    description 'Module-level imports inside mealie.middleware; sibling components shown as boundary nodes.'
+    include mealie.backend.middleware
+    include mealie.backend.middleware.**
+    include mealie.backend.app
+    include mealie.backend.lang
+    autoLayout LeftRight
+  }
+
+  view code_pkgs of mealie.backend.pkgs {
+    title 'Code — mealie.pkgs'
+    description 'Module-level imports inside mealie.pkgs; sibling components shown as boundary nodes.'
+    include mealie.backend.pkgs
+    include mealie.backend.pkgs.**
+    include mealie.backend.lang
+    include mealie.backend.routes
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_repos of mealie.backend.repos {
+    title 'Code — mealie.repos'
+    description 'Module-level imports inside mealie.repos; sibling components shown as boundary nodes.'
+    include mealie.backend.repos
+    include mealie.backend.repos.**
+    include mealie.backend.assets
+    include mealie.backend.core
+    include mealie.backend.db
+    include mealie.backend.lang
+    include mealie.backend.routes
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_routes of mealie.backend.routes {
+    title 'Code — mealie.routes'
+    description 'Module-level imports inside mealie.routes; sibling components shown as boundary nodes.'
+    include mealie.backend.routes
+    include mealie.backend.routes.**
+    include mealie.backend.app
+    include mealie.backend.core
+    include mealie.backend.db
+    include mealie.backend.lang
+    include mealie.backend.pkgs
+    include mealie.backend.repos
+    include mealie.backend.schema
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_schema of mealie.backend.schema {
+    title 'Code — mealie.schema'
+    description 'Module-level imports inside mealie.schema; sibling components shown as boundary nodes.'
+    include mealie.backend.schema
+    include mealie.backend.schema.**
+    include mealie.backend.core
+    include mealie.backend.db
+    include mealie.backend.lang
+    include mealie.backend.pkgs
+    include mealie.backend.repos
+    include mealie.backend.routes
+    include mealie.backend.services
+    autoLayout LeftRight
+  }
+
+  view code_services of mealie.backend.services {
+    title 'Code — mealie.services'
+    description 'Module-level imports inside mealie.services; sibling components shown as boundary nodes.'
+    include mealie.backend.services
+    include mealie.backend.services.**
+    include mealie.backend.app
+    include mealie.backend.core
+    include mealie.backend.db
+    include mealie.backend.lang
+    include mealie.backend.pkgs
+    include mealie.backend.repos
+    include mealie.backend.routes
+    include mealie.backend.schema
+    autoLayout LeftRight
+  }
+}
